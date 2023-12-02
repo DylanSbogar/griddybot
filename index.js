@@ -4,7 +4,13 @@ const { Client, Collection, Events, GatewayIntentBits } = require("discord.js");
 const { token } = require("./config.json");
 
 // Create a new client instance.
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
 
 client.commands = new Collection();
 
@@ -40,35 +46,47 @@ client.once(Events.ClientReady, (readyClient) => {
 // Log into Discord with your client's token.
 client.login(token);
 
-//
+// Detect a message being sent in the channel, and handle it appropriately if necessary.
+client.on("messageCreate", async (message) => {
+  const ozBargain = "https://www.ozbargain.com.au/node/";
+  const gnRegex = /\b(?:GM|GN)\b/i;
+  const gnRegexMatch = gnRegex.exec(message.content);
+
+  // Ignore messages sent from griddybot.
+  if (message.author.bot) return;
+
+  if (message.content.startsWith(ozBargain)) {
+    message.channel.send("Thanks just bought");
+  } else if (gnRegexMatch) {
+    // Repeat the first match of the regex back, in case a user says "gm gn" for example.
+    message.channel.send(gnRegexMatch[0]);
+  }
+});
+
+// Detect commands and handle them appropriately.
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (interaction.isChatInputCommand()) {
-    const command = interaction.client.commands.get(interaction.commandName);
+  if (!interaction.isChatInputCommand()) return;
 
-    if (!command) {
-      console.error(
-        `No command matching ${interaction.commandName} was found.`
-      );
-      return;
-    }
+  const command = interaction.client.commands.get(interaction.commandName);
+  if (!command) {
+    console.error(`No command matching ${interaction.commandName} was found.`);
+    return;
+  }
 
-    try {
-      await command.execute(interaction);
-    } catch (error) {
-      console.error(error);
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({
-          content: "There was an error while executing this command!",
-          ephemeral: true,
-        });
-      } else {
-        await interaction.reply({
-          content: "There was an error while executing this command!",
-          ephemeral: true,
-        });
-      }
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(error);
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({
+        content: "There was an error while executing this command!",
+        ephemeral: true,
+      });
+    } else {
+      await interaction.reply({
+        content: "There was an error while executing this command!",
+        ephemeral: true,
+      });
     }
-  } else {
-    // Do stuff like ozbargain/gm-gn checks here
   }
 });
