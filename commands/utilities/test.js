@@ -5,6 +5,6 @@ module.exports = {
     .setName("test")
     .setDescription("testing bot reading slash commands"),
   async execute(interaction) {
-    await interaction.reply("response!");
+    await interaction.reply("New Response!");
   },
 };
