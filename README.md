@@ -20,7 +20,9 @@ Once you have all these, the `config.json` file should be created/placed in the 
     "clientId": "CLIENT_ID",
     "guildId": "GUILD_ID",
     "fortniteApiUrl": "https://fortnite-api.com/v2/cosmetics/br/search?name=",
-    "griddyIcon": "https://cdn-0.skin-tracker.com/images/fnskins/icon/fortnite-get-griddy-emote.png?ezimgfmt=rs:180x180/rscb10/ngcb10/notWebP"
+    "griddyIcon": "https://cdn-0.skin-tracker.com/images/fnskins/icon/fortnite-get-griddy-emote.png?ezimgfmt=rs:180x180/rscb10/ngcb10/notWebP",
+    "minecraftUrl": "https://api.mcsrvstat.us/2/",
+    "minecraftIconUrl": "https://api.mcsrvstat.us/icon/"
 }
 ```
 
