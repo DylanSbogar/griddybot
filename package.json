@@ -18,6 +18,11 @@
   },
   "homepage": "https://github.com/DylanSbogar/griddybot#readme",
   "dependencies": {
-    "discord.js": "^14.14.1"
+    "axios": "^1.6.2",
+    "discord.js": "^14.14.1",
+    "tesseract.js": "^5.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.55.0"
   }
 }
