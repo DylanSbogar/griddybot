@@ -12,7 +12,19 @@ Next, you will require a `config.json` file which will house the following thing
 
 - `guildId`: This is the Server ID you wish to test the bot on. This can be obtained via right-clicking on the server of your choice, and selecting `Copy Server ID`. Note that you will need Developer Settings to be enabled.
 
-Once you have all these, the `config.json` file should be created/placed in the root directory of the repo.
+Once you have all these, the `config.json` file should be created/placed in the root directory of the repo. It should look something like this:
+
+```
+{
+    "token": "TOKEN",
+    "clientId": "CLIENT_ID",
+    "guildId": "GUILD_ID",
+    "fortniteApiUrl": "https://fortnite-api.com/v2/cosmetics/br/search?name=",
+    "griddyIcon": "https://cdn-0.skin-tracker.com/images/fnskins/icon/fortnite-get-griddy-emote.png?ezimgfmt=rs:180x180/rscb10/ngcb10/notWebP"
+}
+```
+
+Feel free to copy this as a base, as you will require the other values that haven't been sanitised.
 
 ## Running the Application
 
