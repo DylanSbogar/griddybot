@@ -3,18 +3,96 @@ const Tesseract = require("tesseract.js");
 const axios = require("axios");
 const fs = require("fs");
 
-// Move performOCR and deleteImage outside of the execute function
-async function performOCR(interaction, imagePath) {
+const jsonFile = "daylist.json";
+
+// Function to read content from a JSON file
+function readJsonFile(callback) {
+  fs.readFile(jsonFile, "utf8", (err, data) => {
+    if (err) {
+      console.error(`Error reading the JSON file: ${err}`);
+      return;
+    }
+    callback(data);
+  });
+}
+
+// Function to write content to a JSON file
+function writeJsonFile(content, callback) {
+  fs.writeFile(jsonFile, JSON.stringify(content, null, 2), "utf8", (err) => {
+    if (err) {
+      console.error(`Error writing to the JSON file: ${err}`);
+    } else {
+      console.log("Data has been written to the JSON file.");
+      callback();
+    }
+  });
+}
+
+function mergeAndUpdate(interaction, split) {
+  console.log(split);
+
   try {
-    const { data: { text } } = await Tesseract.recognize(imagePath, "eng");
+    // Read existing content in from JSON.
+    readJsonFile((data) => {
+      const existing = JSON.parse(data);
+
+      // Track the new words being written.
+      const log = [];
+
+      // Merge split with existing, excluding duplicates,
+      const updated = split.reduce((result, word) => {
+        const lowercase = word.toLowerCase();
+
+        if (
+          !existing.some(
+            (existingWord) => existingWord.toLowerCase() === lowercase
+          )
+        ) {
+          result.push(word);
+          log.push(word); // Track added words.
+        }
+        return result;
+      }, existing);
+
+      // Write the updated array out to JSON.
+      writeJsonFile(updated, () => {
+        if (log.length > 0) {
+          // Write the updated array out to JSON.
+          writeJsonFile(updated, () => {
+            // Update the reply with new words.
+            interaction.followUp({ content: `New words found: ${log}` });
+          });
+        } else {
+          // No new words found, update the reply accordingly.
+          interaction.followUp({ content: "No new words found." });
+        }
+      });
+    });
+  } catch (parseErr) {
+    console.error(`Error parsing JSON: ${parseErr}`);
+  }
+}
+
+// Perform the Optical Character Recognition.
+async function performOCR(interaction, imagePath, daylistName) {
+  try {
+    const {
+      data: { text },
+    } = await Tesseract.recognize(imagePath, "eng");
+
+    // Split the string by spaces and newlines, in the case of mobile screenshots.
+    let splitText = text
+      .split(/[\s\n]+/)
+      .map((str) => str.trim())
+      .filter(Boolean);
 
     console.log(`Text: ${text}`);
+    console.log(`splitText: ${splitText}`);
+
+    mergeAndUpdate(interaction, splitText);
 
     // Delete the downloaded image after processing
     deleteImage(imagePath);
-
-    // Update the interaction with the OCR result
-    await interaction.followUp({ content: text });
   } catch (error) {
     console.error(`Error performing OCR: ${error.message}`);
 
@@ -26,6 +104,7 @@ async function performOCR(interaction, imagePath) {
   }
 }
 
+// Function to delete an image
 function deleteImage(imagePath) {
   fs.unlink(imagePath, (err) => {
     if (err) {
@@ -60,14 +139,12 @@ module.exports = {
       const hasAttachment = interaction.options.get("file") || null;
       const daylistName = interaction.options.getString("daylist") || null;
 
-      console.log("hasAttachment", hasAttachment);
-      console.log("daylistName", daylistName);
-
       if (hasAttachment == null && daylistName == null) {
         // Neither option provided
-        await interaction.editReply(
-          "Please provide either an attachment or custom text."
-        );
+        await interaction.editReply({
+          content: "Please provide either an attachment or custom text.",
+          ephemeral: true,
+        });
         return;
       }
 
@@ -95,12 +172,15 @@ module.exports = {
             interaction.followUp("Error downloading image. Please try again.");
           });
       } else if (daylistName != null) {
-        // No attachment provided, just use custom text
-        await interaction.followUp(daylistName);
+        // Split daylistName by blank spaces.
+        const splitDaylistName = daylistName.split(" ");
+        mergeAndUpdate(interaction, splitDaylistName);
       }
     } catch (error) {
       console.error("Error in execute:", error);
-      await interaction.followUp("An unexpected error occurred. Please check the logs.");
+      await interaction.followUp(
+        "An unexpected error occurred. Please check the logs."
+      );
     }
   },
 };
