@@ -1,5 +1,4 @@
 const { SlashCommandBuilder } = require("discord.js");
-
 const Tesseract = require("tesseract.js");
 const axios = require("axios");
 const fs = require("fs");
@@ -15,9 +14,10 @@ module.exports = {
         .setRequired(true)
     ),
   async execute(interaction) {
-    // const testUrl =
-    //   "https://media.discordapp.net/attachments/1180513347892953138/1180678848648593570/image.png?ex=657e4bdd&is=656bd6dd&hm=b6321b7bd7938880aac9e969c915f8c2593bd219391e860f68da438b1c326dcd&=&format=webp&quality=lossless";
-    const testPath = "downloaded_image.png";
+    // Acknowledge the interaction immediately
+    interaction.deferReply();
+
+    const imagePath = "downloaded_image.png";
     const imageUrl = interaction.options.getAttachment("file").url;
 
     // Download the image using axios
@@ -27,15 +27,17 @@ module.exports = {
       responseType: "stream",
     })
       .then((response) => {
-        response.data.pipe(fs.createWriteStream(testPath));
+        response.data.pipe(fs.createWriteStream(imagePath));
 
         response.data.on("end", () => {
           // Image downloaded, now perform OCR
-          performOCR(testPath);
+          performOCR(imagePath);
         });
       })
       .catch((error) => {
         console.error(`Error downloading image: ${error.message}`);
+        // Reply with an error message
+        interaction.editReply("Error downloading image. Please try again.");
       });
 
     function performOCR(imagePath) {
@@ -47,12 +49,18 @@ module.exports = {
 
           // Delete the downloaded image after processing
           deleteImage(imagePath);
+
+          // Update the interaction with the OCR result
+          interaction.editReply(text);
         })
         .catch((error) => {
           console.error(`Error performing OCR: ${error.message}`);
 
           // Delete the downloaded image in case of an error
           deleteImage(imagePath);
+
+          // Update the interaction with an error message
+          interaction.editReply("Error performing OCR. Please try again.");
         });
     }
 
