@@ -1,5 +1,6 @@
 node_modules
 config.json
 daylist.json
+drink.json
 eng.traineddata
 .eslintrc.js

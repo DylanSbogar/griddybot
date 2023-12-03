@@ -29,7 +29,6 @@ module.exports = {
 
       // Retrieve the Item information from the API.
       const request = fortniteApiUrl + encodedItem;
-      console.log(`Request: ${request}`);
       const response = await fetch(request);
 
       // Check if the request was successful (status code 2xx)
