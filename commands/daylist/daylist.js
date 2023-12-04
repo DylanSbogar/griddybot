@@ -12,7 +12,8 @@ function readJsonFile(callback) {
       console.error(`Error reading the JSON file: ${err}`);
       return;
     }
-    callback(data);
+    const jsonData = JSON.parse(data);
+    callback(jsonData);
   });
 }
 
@@ -28,42 +29,64 @@ function writeJsonFile(content, callback) {
   });
 }
 
-function mergeAndUpdate(interaction, split) {
+function mergeAndUpdate(interaction, userId, split) {
   console.log(split);
 
   try {
-    // Read existing content in from JSON.
+    // Read existing content from JSON.
     readJsonFile((data) => {
-      const existing = JSON.parse(data);
+      const existing = data.users.find((user) => user[userId]) || {};
 
-      // Track the new words being written.
-      const log = [];
+      // Track the new words being written for the user.
+      const userLog = [];
 
-      // Merge split with existing, excluding duplicates,
-      const updated = split.reduce((result, word) => {
+      // Merge split with existing user words, excluding duplicates.
+      const existingUserWords = new Set(existing[userId] || []);
+      const userWords = split.reduce((result, word) => {
         const lowercase = word.toLowerCase();
 
-        if (
-          !existing.some(
-            (existingWord) => existingWord.toLowerCase() === lowercase
-          )
-        ) {
-          result.push(word);
-          log.push(word); // Track added words.
+        if (!existingUserWords.has(lowercase)) {
+          result.push(lowercase);
+          userLog.push(lowercase); // Track added words for the user.
         }
         return result;
-      }, existing);
+      }, Array.from(existingUserWords));
 
-      // Write the updated array out to JSON.
-      writeJsonFile(updated, () => {
-        if (log.length > 0) {
-          // Write the updated array out to JSON.
-          writeJsonFile(updated, () => {
-            // Update the reply with new words.
-            interaction.followUp({ content: `New words found: ${log}` });
+      // Track new words collectively for all users.
+      const allUserWords = new Set(
+        data.users.reduce((allWords, user) => {
+          const words = user[Object.keys(user)[0]];
+          return allWords.concat(words);
+        }, [])
+      );
+
+      const newAllWords = Array.from(userWords).filter(
+        (word) => !allUserWords.has(word)
+      );
+
+      // Update user words in the JSON data.
+      data.users = data.users.filter((user) => Object.keys(user)[0] !== userId);
+      data.users.push({ [userId]: userWords });
+
+      // Update all words in the JSON data.
+      data.allWords = Array.from(new Set([...data.allWords, ...newAllWords]));
+
+      // Write the updated data out to JSON.
+      writeJsonFile(data, () => {
+        if (userLog.length > 0 || newAllWords.length > 0) {
+          // Update the reply with new words for the user and new words for all.
+          const replyContent = [
+            userLog.length > 0 ? `New words for you: ${userLog}` : null,
+            newAllWords.length > 0 ? `New words for all: ${newAllWords}` : null,
+          ]
+            .filter(Boolean)
+            .join("\n");
+
+          interaction.followUp({
+            content: replyContent,
           });
         } else {
-          // No new words found, update the reply accordingly.
+          // No new words found for the user, update the reply accordingly.
           interaction.followUp({ content: "No new words found." });
         }
       });
@@ -89,17 +112,17 @@ async function performOCR(interaction, imagePath, daylistName) {
     console.log(`Text: ${text}`);
     console.log(`splitText: ${splitText}`);
 
-    mergeAndUpdate(interaction, splitText);
+    mergeAndUpdate(interaction, interaction.user.id, splitText);
 
-    // Delete the downloaded image after processing
+    // Delete the downloaded image after processing.
     deleteImage(imagePath);
   } catch (error) {
     console.error(`Error performing OCR: ${error.message}`);
 
-    // Delete the downloaded image in case of an error
+    // Delete the downloaded image in case of an error.
     deleteImage(imagePath);
 
-    // Update the interaction with an error message
+    // Update the interaction with an error message.
     await interaction.followUp("Error performing OCR. Please try again.");
   }
 }
@@ -174,7 +197,8 @@ module.exports = {
       } else if (daylistName != null) {
         // Split daylistName by blank spaces.
         const splitDaylistName = daylistName.split(" ");
-        mergeAndUpdate(interaction, splitDaylistName);
+        // Pass the user ID to the mergeAndUpdate function
+        mergeAndUpdate(interaction, interaction.user.id, splitDaylistName);
       }
     } catch (error) {
       console.error("Error in execute:", error);
