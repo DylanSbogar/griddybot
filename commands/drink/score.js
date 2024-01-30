@@ -50,7 +50,7 @@ module.exports = {
         const data = JSON.parse(jsonString);
         const users = [...data.users];
 
-        let result = "";
+        let result = `**Results for ${year}**\n`;
         let highestTotal = -Infinity;
         let prevTotal = Infinity;
         let rank = 1;
