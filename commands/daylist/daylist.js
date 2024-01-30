@@ -34,6 +34,7 @@ function writeJsonFile(content, callback) {
   });
 }
 
+// Function to merge and update user data
 function mergeAndUpdate(interaction, userId, split) {
   try {
     // Read existing content from JSON.
@@ -50,14 +51,18 @@ function mergeAndUpdate(interaction, userId, split) {
       const userWords = split.reduce(
         (result, word) => {
           const lowercase = word.toLowerCase();
-
           result[lowercase] = (result[lowercase] || 0) + 1;
           userLog[lowercase] = result[lowercase]; // Track added words and their count.
-
           return result;
         },
         { ...existingUserWords }
       );
+
+      // Sort userWords by count in descending order
+      const sortedUserWords = Object.entries(userWords).sort(
+        (a, b) => b[1] - a[1]
+      );
+      const sortedUserWordsObject = Object.fromEntries(sortedUserWords);
 
       // Track new words collectively for all users.
       const allUserWords = new Set(
@@ -70,7 +75,6 @@ function mergeAndUpdate(interaction, userId, split) {
       const allWords = split.reduce(
         (result, word) => {
           const lowercase = word.toLowerCase();
-
           if (!existingAll[lowercase]) {
             if (!result[lowercase]) {
               result[lowercase] = 0;
@@ -91,7 +95,7 @@ function mergeAndUpdate(interaction, userId, split) {
 
       // Update user words in the JSON data.
       data.users = data.users.filter((user) => Object.keys(user)[0] !== userId);
-      data.users.push({ [userId]: userWords });
+      data.users.push({ [userId]: sortedUserWordsObject });
 
       // Update all words in the JSON data.
       Object.entries(newAllWords).forEach(([word, count]) => {
