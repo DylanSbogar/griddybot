@@ -1,9 +1,14 @@
-const { SlashCommandBuilder } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  ApplicationCommandPermissionType,
+} = require("discord.js");
 const Tesseract = require("tesseract.js");
 const axios = require("axios");
 const fs = require("fs");
+const path = require("path");
 
-const jsonFile = "daylist.json";
+const folderPath = __dirname;
+const jsonFile = path.join(folderPath, "daylist.json");
 
 // Function to read content from a JSON file
 function readJsonFile(callback) {
@@ -30,54 +35,88 @@ function writeJsonFile(content, callback) {
 }
 
 function mergeAndUpdate(interaction, userId, split) {
-  console.log(split);
-
   try {
     // Read existing content from JSON.
     readJsonFile((data) => {
       const existing = data.users.find((user) => user[userId]) || {};
+      const existingAll = data.allWords;
 
       // Track the new words being written for the user.
-      const userLog = [];
+      const userLog = {};
+      const newAllWords = {};
 
-      // Merge split with existing user words, excluding duplicates.
-      const existingUserWords = new Set(existing[userId] || []);
-      const userWords = split.reduce((result, word) => {
-        const lowercase = word.toLowerCase();
+      // Merge split with existing user words, updating counts if words already exist.
+      const existingUserWords = existing[userId] || {};
+      const userWords = split.reduce(
+        (result, word) => {
+          const lowercase = word.toLowerCase();
 
-        if (!existingUserWords.has(lowercase)) {
-          result.push(lowercase);
-          userLog.push(lowercase); // Track added words for the user.
-        }
-        return result;
-      }, Array.from(existingUserWords));
+          result[lowercase] = (result[lowercase] || 0) + 1;
+          userLog[lowercase] = result[lowercase]; // Track added words and their count.
+
+          return result;
+        },
+        { ...existingUserWords }
+      );
 
       // Track new words collectively for all users.
       const allUserWords = new Set(
         data.users.reduce((allWords, user) => {
           const words = user[Object.keys(user)[0]];
-          return allWords.concat(words);
+          return allWords.concat(Object.keys(words));
         }, [])
       );
 
-      const newAllWords = Array.from(userWords).filter(
-        (word) => !allUserWords.has(word)
+      const allWords = split.reduce(
+        (result, word) => {
+          const lowercase = word.toLowerCase();
+
+          if (!existingAll[lowercase]) {
+            if (!result[lowercase]) {
+              result[lowercase] = 0;
+            }
+            result[lowercase]++;
+            newAllWords[lowercase] = result[lowercase]; // Track added words and their count.
+          }
+          return result;
+        },
+        { ...existingAll }
       );
+
+      // Extract existing keys from objectsList
+      let existingKeys = existingAll.map((obj) => Object.keys(obj)[0]);
+
+      // Filter out strings that have a corresponding key in existingKeys
+      const newAllStrings = split.filter((str) => !existingKeys.includes(str));
 
       // Update user words in the JSON data.
       data.users = data.users.filter((user) => Object.keys(user)[0] !== userId);
       data.users.push({ [userId]: userWords });
 
       // Update all words in the JSON data.
-      data.allWords = Array.from(new Set([...data.allWords, ...newAllWords]));
+      Object.entries(newAllWords).forEach(([word, count]) => {
+        const existingIndex = data.allWords.findIndex(
+          (entry) => Object.keys(entry)[0] === word
+        );
+
+        if (existingIndex !== -1) {
+          // Word already exists, increment the count.
+          data.allWords[existingIndex][word] += count;
+        } else {
+          // Word doesn't exist, add a new entry.
+          data.allWords.push({ [word]: count });
+        }
+      });
 
       // Write the updated data out to JSON.
       writeJsonFile(data, () => {
-        if (userLog.length > 0 || newAllWords.length > 0) {
+        if (Object.keys(userLog).length > 0) {
           // Update the reply with new words for the user and new words for all.
           const replyContent = [
-            userLog.length > 0 ? `New words for you: ${userLog}` : null,
-            newAllWords.length > 0 ? `New words for all: ${newAllWords}` : null,
+            `New words for you: ${Object.entries(userLog)
+              .map(([word, count]) => `${word}`)
+              .join(", ")}`,
+            `New words for all: ${newAllStrings.join(", ")}`,
           ]
             .filter(Boolean)
             .join("\n");
@@ -108,9 +147,6 @@ async function performOCR(interaction, imagePath, daylistName) {
       .split(/[\s\n]+/)
       .map((str) => str.trim())
       .filter(Boolean);
-
-    console.log(`Text: ${text}`);
-    console.log(`splitText: ${splitText}`);
 
     mergeAndUpdate(interaction, interaction.user.id, splitText);
 

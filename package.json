@@ -19,6 +19,8 @@
   "homepage": "https://github.com/DylanSbogar/griddybot#readme",
   "dependencies": {
     "axios": "^1.6.2",
+    "canvas": "^2.11.2",
+    "chartjs-node-canvas": "^4.1.6",
     "discord.js": "^14.14.1",
     "tesseract.js": "^5.0.3"
   },
