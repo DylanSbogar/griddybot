@@ -40,7 +40,7 @@ module.exports = {
 
   async execute(interaction) {
     // Grab the number of drinks input by the user
-    const number = interaction.options.getInteger("number");
+    const number = interaction.options.getInteger("number") ?? 1;
 
     // Get user information for reading/writing from file.
     const userId = interaction.user.id;
