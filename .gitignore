@@ -4,3 +4,4 @@ daylist.json
 drink.json
 eng.traineddata
 .eslintrc.js
+commands/drink/drink*.json
