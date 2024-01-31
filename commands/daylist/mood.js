@@ -86,10 +86,18 @@ module.exports = {
       option
         .setName("user")
         .setDescription("The user you whose history you wish to search.")
+    )
+    .addIntegerOption((option) =>
+      option
+        .setName("length")
+        .setDescription("The top x amount of results you wish to retrieve.")
+        .setRequired(false)
+        .setMinValue(1)
     ),
 
   async execute(interaction) {
     const user = interaction.options.getUser("user") ?? interaction.user;
+    const length = interaction.options.getInteger("length") ?? 5;
 
     // Read existing content from JSON.
     readJsonFile(async (data) => {
@@ -102,8 +110,8 @@ module.exports = {
       // Convert the specificUserStats to an array of key-value pairs
       const userStatsArray = Object.entries(specificUserStats);
 
-      // Take a slice of the array to keep only the first 5 items
-      const slicedStats = userStatsArray.slice(0, 10);
+      // Take a slice of the array to keep only the first x items
+      const slicedStats = userStatsArray.slice(0, length);
 
       // Extract the labels and values from the slicedStats
       const labels = slicedStats.map(([key]) => key);
