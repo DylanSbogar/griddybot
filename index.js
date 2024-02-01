@@ -51,6 +51,8 @@ client.on("messageCreate", async (message) => {
   const ozBargain = "https://www.ozbargain.com.au/node/";
   const gnRegex = /\b(?:GM|GN)\b/i;
   const gnRegexMatch = gnRegex.exec(message.content);
+  const thanksRegex = /\b(thanks griddy)\b/i;
+  const thanksRegexMatch = thanksRegex.exec(message.content);
 
   // Ignore messages sent from griddybot.
   if (message.author.bot) return;
@@ -60,6 +62,8 @@ client.on("messageCreate", async (message) => {
   } else if (gnRegexMatch) {
     // Repeat the first match of the regex back, in case a user says "gm gn" for example.
     message.channel.send(gnRegexMatch[0]);
+  } else if (thanksRegexMatch) {
+    message.channel.send("No worries <3");
   }
 });
 
