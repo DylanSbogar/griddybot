@@ -5,4 +5,4 @@ drink.json
 eng.traineddata
 .eslintrc.js
 commands/drink/drink*.json
-commands/drink/BASELINE_daylist.json
+commands/daylist/BASELINE_daylist.json
