@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const path = require('path');
 const fs = require('fs');
 const fetch = require('node-fetch'); // Make sure you have this package installed
