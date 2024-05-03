@@ -8,12 +8,12 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const topic = 'amouranth';
+const topic = 'trash';
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName(topic)
-    .setDescription('GRRRRRRRRRRR WOOF WOOF BARK BARK ARF BARK GRRRR'),
+    .setDescription('garbage'),
   async execute(interaction) {
     var subfolder = topic;
     // Define the path to the subfolder
