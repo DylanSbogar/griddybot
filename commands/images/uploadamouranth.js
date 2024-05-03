@@ -24,7 +24,7 @@ module.exports = {
     const imageAttachment = interaction.options.getAttachment('image');
 
     // Get the subfolder option
-    const subfolder = 'lookatthis';
+    const subfolder = 'amouranth';
 
     // Define the base images folder path
     const baseImagesFolder = path.join(__dirname, '../..', 'images');
