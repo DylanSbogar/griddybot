@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const path = require('path');
 const fs = require('fs');
 const fetch = require('node-fetch'); // Make sure you have this package installed
@@ -56,10 +56,10 @@ module.exports = {
         fs.writeFileSync(filePath, buffer);
 
         // Send a confirmation message to the user
-        await interaction.reply(`Image saved :)`);
+        await interaction.reply({content: `Image saved :)`, flags: MessageFlags.Ephemeral});
       } catch (error) {
         console.error('Error saving the image:', error);
-        await interaction.reply('An error occurred while saving the image.');
+        await interaction.reply({content: 'An error occurred while saving the image.', flags: MessageFlags.Ephemeral});
       }
   }
 };

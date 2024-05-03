@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
+const { SlashCommandBuilder, AttachmentBuilder, MessageFlags } = require("discord.js");
 const path = require('path');
 const fs = require('fs');
 const fetch = require('node-fetch'); // Make sure you have this package installed
@@ -27,7 +27,7 @@ module.exports = {
       // Print the full file path in the error message
       console.log(`Specified subfolder not found. Attempted path: ${imageFolder}`);
       // Send a message indicating that the specified subfolder does not exist
-      await interaction.reply(`The specified subfolder "${subfolder}" does not exist. Upload something first pls.`);
+      await interaction.reply({ content: `The specified subfolder "${subfolder}" does not exist. Upload something first pls.`, flags: MessagFlags.Ephemeral });
     }
   }
 };
@@ -51,10 +51,10 @@ async function sendRandomImage(interaction, imageFolder) {
       await interaction.reply({ files: [imageAttachment] });
     } else {
       // Send a message indicating that the folder is empty
-      await interaction.reply('No images found in the specified folder.');
+      await interaction.reply({content: 'No images found in the specified folder.', flags: MessageFlags.Ephemeral});
     }
   } catch (error) {
     console.error('Error handling random image:', error);
-    await interaction.reply('An error occurred while processing the command.');
+    await interaction.reply({content: 'An error occurred while processing the command.', flags: MessageFlags.Ephemeral});
   }
 }
