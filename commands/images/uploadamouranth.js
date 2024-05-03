@@ -8,23 +8,24 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const topic = 'amouranth';
+
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('uploadamouranth')
+    .setName('upload'.concat(topic))
     .setDescription('GRRRRRRRRRRR WOOF WOOF BARK BARK ARF BARK GRRRR')
     .addAttachmentOption(option =>
       option
         .setName('image')
         .setDescription('yummy')
-        .setRequired(true)
-    ),
+        .setRequired(true)),
   async execute(interaction) {
     const { commandName } = interaction;
     // Get the image attachment option
     const imageAttachment = interaction.options.getAttachment('image');
 
     // Get the subfolder option
-    const subfolder = 'amouranth';
+    const subfolder = topic;
 
     // Define the base images folder path
     const baseImagesFolder = path.join(__dirname, '../..', 'images');

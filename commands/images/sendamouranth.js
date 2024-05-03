@@ -8,13 +8,14 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const topic = 'amouranth';
+
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('amouranth')
-    .setDescription('GRRRRRRRRRRR WOOF WOOF BARK BARK ARF BARK GRRRR')
-  ,
+    .setName(topic)
+    .setDescription('GRRRRRRRRRRR WOOF WOOF BARK BARK ARF BARK GRRRR'),
   async execute(interaction) {
-    var subfolder = 'amouranth';
+    var subfolder = topic;
     // Define the path to the subfolder
     const imageFolder = path.resolve(__dirname, '../..', 'images', subfolder);
 

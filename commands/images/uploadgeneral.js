@@ -8,12 +8,12 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const topic = 'lookatthis';
+const topic = 'trash';
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('upload'.concat(topic))
-    .setDescription('hey man check this out')
+    .setDescription('are you really thinking about uploading that')
     .addAttachmentOption(option =>
       option
         .setName('image')
