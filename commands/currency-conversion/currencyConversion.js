@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const fetch = require("node-fetch");
-require("dotenv").config();
+const { exchangeApiKey } = require("../../config.json");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -8,25 +8,21 @@ module.exports = {
     .setDescription("Get the current conversion rate from AUD to JPY"),
 
   async execute(interaction) {
-    if (!interaction.isCommand()) return;
+    try {
+      const response = await fetch(
+        `https://v6.exchangerate-api.com/v6/${exchangeApiKey}/pair/AUD/JPY`
+      );
+      const data = await response.json();
 
-    if (interaction.commandName === "yen") {
-      try {
-        const response = await fetch(
-          `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_API_KEY}/latest/AUD`
+      const rate = data.conversion_rate;
+      await interaction.reply(
+          `The cuwwent convewsion wate of 1 AUD to JPY is: ¥${rate}`
         );
-        const data = await response.json();
-
-        const rate = data.conversion_rates.JPY;
-        await interaction.reply(
-          `The current conversion rate of 1 AUD to JPY is: ¥${rate}`
-        );
-      } catch (error) {
-        console.error(error);
-        await interaction.reply(
-          "Sorry, I could not fetch the conversion rate at this time."
-        );
-      }
+    } catch (error) {
+      console.error(error);
+      await interaction.reply(
+        "Sowwy, I could not fetch the convewsion wate at this time."
+      );
     }
   },
 };
