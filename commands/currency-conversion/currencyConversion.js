@@ -11,7 +11,7 @@ module.exports = {
   async execute(interaction) {
     try {
       const response = await fetch(
-        `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_API_KEY}/pair/AUD/JPY`
+        `https://v6.exchangerate-api.com/v6/${exchangeApiKey}/pair/AUD/JPY`
       );
       const data = await response.json();
 
