@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require("discord.js");
 const fetch = require("node-fetch");
 const { exchangeApiKey } = require("../../config.json");
+const moment = require("moment-timezone");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -15,9 +16,14 @@ module.exports = {
       const data = await response.json();
 
       const rate = data.conversion_rate;
+      const lastUpdateUtc = data.time_last_update_utc;
+      const lastUpdateAest = moment(lastUpdateUtc)
+        .tz("Australia/Sydney")
+        .format("MMMM Do YYYY, h:mma");
+
       await interaction.reply(
-          `The cuwwent convewsion wate of 1 AUD to JPY is: ¥${rate}`
-        );
+        `The cuwwent convewsion wate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.`
+      );
     } catch (error) {
       console.error(error);
       await interaction.reply(
