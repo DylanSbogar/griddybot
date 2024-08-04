@@ -70,7 +70,7 @@ client.on("messageCreate", async (message) => {
     if (loveRegexMatch) {
       const lovedThing = loveRegexMatch[1];
       message.channel.send(
-        `I love ${lovedThing}\nI love ${lovedThing} Charlie!!!`
+        `I love ${lovedThing}.\nI love ${lovedThing} Charlie!!!`
       );
     }
   }
