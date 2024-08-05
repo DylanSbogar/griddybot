@@ -22,12 +22,12 @@ module.exports = {
         .format("MMMM Do YYYY, h:mma");
 
       await interaction.reply(
-        `The cuwwent convewsion wate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.`
+        `The current conversion wate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.`
       );
     } catch (error) {
       console.error(error);
       await interaction.reply(
-        "Sowwy, I could not fetch the convewsion wate at this time."
+        "Sorry, I could not fetch the conversion rate at this time."
       );
     }
   },
