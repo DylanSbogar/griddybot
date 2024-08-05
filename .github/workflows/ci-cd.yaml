@@ -17,7 +17,7 @@ jobs:
         run: npm install
 
       - name: Stop the existing Application (if running)
-        run: pkill -f "node ."
+        run: pkill -f "node ." || true
 
       - name: Run Deploy Commands
         run: node ./deployCommands.js
