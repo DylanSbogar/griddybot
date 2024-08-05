@@ -53,7 +53,7 @@ client.on("messageCreate", async (message) => {
   const gnRegexMatch = gnRegex.exec(message.content);
   const thanksRegex = /\b(thanks griddy)\b/i;
   const thanksRegexMatch = thanksRegex.exec(message.content);
-  const loveRegex = /\bi love (\w[\w-]*)\b/i;
+  const loveRegex = /\bi love (\w[\w- ]*)\b/i;
 
   // Ignore messages sent from griddybot.
   if (message.author.bot) return;
