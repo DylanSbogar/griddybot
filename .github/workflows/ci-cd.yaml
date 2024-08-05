@@ -3,27 +3,27 @@ name: Node.js CI/CD
 on:
   push:
     branches:
-      - develop
+      - main
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-    - name: Install Dependencies
-      run: npm install
+      - name: Install Dependencies
+        run: npm install
 
-    - name: Stop the existing Application (if running)
-      run: pkill -f "node ."
-    
-    - name: Run Deploy Commands
-      run: node ./deployCommands.js
+      - name: Stop the existing Application (if running)
+        run: pkill -f "node ." || true
 
-    - name: Restart Main App
-      run: node . &
+      - name: Run Deploy Commands
+        run: node ./deployCommands.js
 
-    - name: Wait for the Application to finish
-      run: wait $!
+      - name: Restart Main App
+        run: nohup node . &
+
+      - name: Wait for the Application to finish
+        run: sleep 10
