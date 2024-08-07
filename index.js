@@ -15,7 +15,7 @@ const client = new Client({
 
 // Function to fetch currency conversion - scheduled to run every day at 10:30am
 const scheduledMessage = new cron.CronJob("00 30 10 * * *", () => {
-  const guild = client.guilds.cache.get("791510841446236181");
+  const guild = client.guilds.cache.get("687820446724521984");
   const channel = guild.channels.cache.get("791510841446236181");
 
   try {
