@@ -23,6 +23,7 @@
     "chartjs-node-canvas": "^4.1.6",
     "discord.js": "^14.14.1",
     "moment-timezone": "^0.5.45",
+    "node-cron": "^3.0.3",
     "node-fetch": "^2.7.0",
     "tesseract.js": "^5.0.3"
   },
