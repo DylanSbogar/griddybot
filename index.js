@@ -1,8 +1,13 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { Client, Collection, Events, GatewayIntentBits } = require("discord.js");
-const { token } = require("./config.json");
+const {
+  token,
+  exchangeApiKey,
+  autoExchangeChannelId,
+} = require("./config.json");
 const cron = require("node-cron");
+const moment = require("moment-timezone");
 
 // Create a new client instance.
 const client = new Client({
@@ -11,32 +16,6 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
   ],
-});
-
-// Function to fetch currency conversion - scheduled to run every day at 10:30am
-// const scheduledMessage = cron.schedule("30 10 * * *", () => {
-const scheduledMessage = cron.schedule("30 * * * * *", () => {
-  const channel = channels.cache.get("791510841446236181");
-
-  try {
-    fetch(
-      `https://v6.exchangerate-api.com/v6/${exchangeApiKey}/pair/AUD/JPY`
-    ).then((response) => {
-      const data = response.json();
-      const rate = data.conversion_rate;
-      const lastUpdateUtc = data.time_last_update_utc;
-      const lastUpdateAest = moment(lastUpdateUtc)
-        .tz("Australia/Sydney")
-        .format("MMMM Do YYYY, h:mma");
-
-      channel.send(
-        `The current conversion rate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.`
-      );
-    });
-  } catch (error) {
-    console.error(error);
-    channel.send("Sorry, I could not fetch the conversion rate at this time.");
-  }
 });
 
 client.commands = new Collection();
@@ -70,7 +49,39 @@ client.once(Events.ClientReady, (readyClient) => {
   console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 
   // Currency Conversion daily message
-  scheduledMessage.start();
+  const schedule = cron.schedule(
+    "30 10 * * *",
+    () => {
+      const channel = client.channels.cache.get(autoExchangeChannelId);
+
+      try {
+        fetch(
+          `https://v6.exchangerate-api.com/v6/${exchangeApiKey}/pair/AUD/JPY`
+        ).then((response) => {
+          const data = response.json();
+          const rate = data.conversion_rate;
+          const lastUpdateUtc = data.time_last_update_utc;
+          const lastUpdateAest = moment(lastUpdateUtc)
+            .tz("Australia/Sydney")
+            .format("MMMM Do YYYY, h:mma");
+
+          channel.send(
+            `The current conversion rate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.`
+          );
+        });
+      } catch (error) {
+        console.error(error);
+        channel.send(
+          "Sorry, I could not fetch the conversion rate at this time."
+        );
+      }
+    },
+    {
+      scheduled: false,
+    }
+  );
+
+  schedule.start();
 });
 
 // Log into Discord with your client's token.
