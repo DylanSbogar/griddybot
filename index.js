@@ -2,7 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { Client, Collection, Events, GatewayIntentBits } = require("discord.js");
 const { token } = require("./config.json");
-const cron = require("cron");
+const cron = require("node-cron");
 
 // Create a new client instance.
 const client = new Client({
@@ -14,9 +14,9 @@ const client = new Client({
 });
 
 // Function to fetch currency conversion - scheduled to run every day at 10:30am
-const scheduledMessage = new cron.CronJob("00 30 10 * * *", () => {
-  const guild = client.guilds.cache.get("687820446724521984");
-  const channel = guild.channels.cache.get("791510841446236181");
+// const scheduledMessage = cron.schedule("30 10 * * *", () => {
+const scheduledMessage = cron.schedule("30 * * * * *", () => {
+  const channel = channels.cache.get("791510841446236181");
 
   try {
     fetch(
@@ -30,7 +30,7 @@ const scheduledMessage = new cron.CronJob("00 30 10 * * *", () => {
         .format("MMMM Do YYYY, h:mma");
 
       channel.send(
-        `The current conversion wate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.`
+        `The current conversion rate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.`
       );
     });
   } catch (error) {

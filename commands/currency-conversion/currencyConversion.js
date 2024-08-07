@@ -22,7 +22,7 @@ module.exports = {
         .format("MMMM Do YYYY, h:mma");
 
       await interaction.reply(
-        `The current conversion wate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.`
+        `The current conversion rate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.`
       );
     } catch (error) {
       console.error(error);
