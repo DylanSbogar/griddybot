@@ -2,6 +2,33 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { Client, Collection, Events, GatewayIntentBits } = require("discord.js");
 const { token } = require("./config.json");
+const cron = require("cron");
+
+// Function to fetch currency conversion - scheduled to run every day at 10:30am
+const scheduledMessage = new cron.CronJob("00 30 10 * * *", () => {
+  const guild = client.guilds.cache.get("791510841446236181");
+  const channel = guild.channels.cache.get("791510841446236181");
+
+  try {
+    fetch(
+      `https://v6.exchangerate-api.com/v6/${exchangeApiKey}/pair/AUD/JPY`
+    ).then((response) => {
+      const data = response.json();
+      const rate = data.conversion_rate;
+      const lastUpdateUtc = data.time_last_update_utc;
+      const lastUpdateAest = moment(lastUpdateUtc)
+        .tz("Australia/Sydney")
+        .format("MMMM Do YYYY, h:mma");
+
+      channel.send(
+        `The current conversion wate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.`
+      );
+    });
+  } catch (error) {
+    console.error(error);
+    channel.send("Sorry, I could not fetch the conversion rate at this time.");
+  }
+});
 
 // Create a new client instance.
 const client = new Client({
@@ -41,6 +68,9 @@ for (const folder of commandFolders) {
 // When the client is ready, run this code (only once).
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+
+  // Currency Conversion daily message
+  scheduledMessage.start();
 });
 
 // Log into Discord with your client's token.
@@ -70,13 +100,12 @@ client.on("messageCreate", async (message) => {
     if (loveRegexMatch) {
       const lovedThing = loveRegexMatch[1];
       if (lovedThing.length > 1950) {
-        message.channel.send('yikes, I dont love all that')
+        message.channel.send("yikes, I dont love all that");
       } else {
         message.channel.send(
-            `I love ${lovedThing} charlie\nI love ${lovedThing}!!!`
+          `I love ${lovedThing} charlie\nI love ${lovedThing}!!!`
         );
       }
-
     }
   }
 });
