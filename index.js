@@ -58,16 +58,17 @@ client.once(Events.ClientReady, (readyClient) => {
         fetch(
           `https://v6.exchangerate-api.com/v6/${exchangeApiKey}/pair/AUD/JPY`
         ).then((response) => {
-          const data = response.json();
-          const rate = data.conversion_rate;
-          const lastUpdateUtc = data.time_last_update_utc;
-          const lastUpdateAest = moment(lastUpdateUtc)
-            .tz("Australia/Sydney")
-            .format("MMMM Do YYYY, h:mma");
+          const data = response.json().then((value) => {
+            const rate = value.conversion_rate;
+            const lastUpdateUtc = data.time_last_update_utc;
+            const lastUpdateAest = moment(lastUpdateUtc)
+              .tz("Australia/Sydney")
+              .format("MMMM Do YYYY, h:mma");
 
-          channel.send(
-            `The current conversion rate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.`
-          );
+            channel.send(
+              `The current conversion rate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.`
+            );
+          });
         });
       } catch (error) {
         console.error(error);
