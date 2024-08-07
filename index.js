@@ -4,6 +4,15 @@ const { Client, Collection, Events, GatewayIntentBits } = require("discord.js");
 const { token } = require("./config.json");
 const cron = require("cron");
 
+// Create a new client instance.
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
+
 // Function to fetch currency conversion - scheduled to run every day at 10:30am
 const scheduledMessage = new cron.CronJob("00 30 10 * * *", () => {
   const guild = client.guilds.cache.get("791510841446236181");
@@ -28,15 +37,6 @@ const scheduledMessage = new cron.CronJob("00 30 10 * * *", () => {
     console.error(error);
     channel.send("Sorry, I could not fetch the conversion rate at this time.");
   }
-});
-
-// Create a new client instance.
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-  ],
 });
 
 client.commands = new Collection();
