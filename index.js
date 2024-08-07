@@ -53,7 +53,7 @@ client.on("messageCreate", async (message) => {
   const gnRegexMatch = gnRegex.exec(message.content);
   const thanksRegex = /\b(thanks griddy)\b/i;
   const thanksRegexMatch = thanksRegex.exec(message.content);
-  const loveRegex = /\bi love (\w[\w-]*)\b/i;
+  const loveRegex = /^i love (.*)/i;
 
   // Ignore messages sent from griddybot.
   if (message.author.bot) return;
@@ -69,9 +69,14 @@ client.on("messageCreate", async (message) => {
     const loveRegexMatch = loveRegex.exec(message.content);
     if (loveRegexMatch) {
       const lovedThing = loveRegexMatch[1];
-      message.channel.send(
-        `I love ${lovedThing} charlie\nI love ${lovedThing}!!!`
-      );
+      if (lovedThing.length > 1950) {
+        message.channel.send('yikes, I dont love all that')
+      } else {
+        message.channel.send(
+            `I love ${lovedThing} charlie\nI love ${lovedThing}!!!`
+        );
+      }
+
     }
   }
 });
