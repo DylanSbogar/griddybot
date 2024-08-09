@@ -65,8 +65,19 @@ client.once(Events.ClientReady, (readyClient) => {
               .tz("Australia/Sydney")
               .format("MMMM Do YYYY, h:mma");
 
+            // Read the previous rate from the file
+            let previousRateMessage =
+              "No previous conversion rate found on file.";
+            if (fs.existsSync("previous_rate.txt")) {
+              const previousRate = fs.readFileSync("previous_rate.txt", "utf8");
+              previousRateMessage = `Previous conversion rate: ¥${previousRate}`;
+            }
+
+            // Write the current rate to the file, which will overwrite the previous value
+            fs.writeFileSync("previous_rate.txt", rate.toString());
+
             channel.send(
-              `The current conversion rate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.`
+              `The current conversion rate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.\n${previousRateMessage}`
             );
           });
         });
