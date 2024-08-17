@@ -8,7 +8,7 @@ const fs = require("fs");
 const path = require("path");
 
 const folderPath = __dirname;
-const jsonFile = path.join(folderPath, "daylist.json");
+const jsonFile = path.join(folderPath, "daylist2.json");
 
 // Function to read content from a JSON file
 function readJsonFile(callback) {
@@ -39,104 +39,90 @@ function mergeAndUpdate(interaction, userId, split) {
   try {
     // Read existing content from JSON.
     readJsonFile((data) => {
-      const existing = data.users.find((user) => user[userId]) || {};
-      const existingAll = data.allWords;
+      const usersData = data.users[userId] || {};
 
-      // Track the new words being written for the user.
-      const userLog = {};
-      const newAllWords = {};
+      var globalUniqueWords = new Set();
+      var yourUniqueWords = new Set();
 
-      // Merge split with existing user words, updating counts if words already exist.
-      const existingUserWords = existing[userId] || {};
-      const userWords = split.reduce(
-        (result, word) => {
-          const lowercase = word.toLowerCase();
-          result[lowercase] = (result[lowercase] || 0) + 1;
-          userLog[lowercase] = result[lowercase]; // Track added words and their count.
-          return result;
-        },
-        { ...existingUserWords }
-      );
-
-      // Sort userWords by count in descending order
-      const sortedUserWords = Object.entries(userWords).sort(
-        (a, b) => b[1] - a[1]
-      );
-      const sortedUserWordsObject = Object.fromEntries(sortedUserWords);
-
-      // Track new words collectively for all users.
-      const allUserWords = new Set(
-        data.users.reduce((allWords, user) => {
-          const words = user[Object.keys(user)[0]];
-          return allWords.concat(Object.keys(words));
-        }, [])
-      );
-
-      const allWords = split.reduce(
-        (result, word) => {
-          const lowercase = word.toLowerCase();
-          if (!existingAll[lowercase]) {
-            if (!result[lowercase]) {
-              result[lowercase] = 0;
+      // Populate the sets of unique words
+      for (user in data.users) {
+        for (daylistObj of data.users[user]) {
+          for (word of daylistObj.description) {
+            globalUniqueWords.add(word);
+            if (user == userId) {
+              yourUniqueWords.add(word);
             }
-            result[lowercase]++;
-            newAllWords[lowercase] = result[lowercase]; // Track added words and their count.
           }
-          return result;
-        },
-        { ...existingAll }
-      );
-
-      // Extract existing keys from objectsList
-      let existingKeys = existingAll.map((obj) => Object.keys(obj)[0]);
-
-      // Filter out strings that have a corresponding key in existingKeys
-      const newAllStrings = split.filter((str) => !existingKeys.includes(str));
-
-      // Update user words in the JSON data.
-      data.users = data.users.filter((user) => Object.keys(user)[0] !== userId);
-      data.users.push({ [userId]: sortedUserWordsObject });
-
-      // Update all words in the JSON data.
-      Object.entries(newAllWords).forEach(([word, count]) => {
-        const existingIndex = data.allWords.findIndex(
-          (entry) => Object.keys(entry)[0] === word
-        );
-
-        if (existingIndex !== -1) {
-          // Word already exists, increment the count.
-          data.allWords[existingIndex][word] += count;
-        } else {
-          // Word doesn't exist, add a new entry.
-          data.allWords.push({ [word]: count });
         }
-      });
+      }
+
+      // Write the new obj
+      const newObj = generateDaylistObj(split);
+      usersData.push(newObj);
+      data.users[userId] = usersData;
 
       // Write the updated data out to JSON.
       writeJsonFile(data, () => {
-        if (Object.keys(userLog).length > 0) {
-          // Update the reply with new words for the user and new words for all.
-          const replyContent = [
-            `New words for you: ${Object.entries(userLog)
-              .map(([word, count]) => `${word}`)
-              .join(", ")}`,
-            `New words for all: ${newAllStrings.join(", ")}`,
-          ]
-            .filter(Boolean)
-            .join("\n");
-
-          interaction.followUp({
-            content: replyContent,
-          });
-        } else {
-          // No new words found for the user, update the reply accordingly.
-          interaction.followUp({ content: "No new words found." });
-        }
+        const replyContent = [
+          split.join(" "),
+          `New words for you: ${hasNewWords(yourUniqueWords, newObj).join(', ')}`,
+          `New words for all: ${hasNewWords(globalUniqueWords, newObj).join(', ')}`,
+        ]
+          .filter(Boolean)
+          .join("\n");
+        interaction.followUp({
+          content: replyContent,
+        });
       });
     });
   } catch (parseErr) {
     console.error(`Error parsing JSON: ${parseErr}`);
   }
+}
+
+function hasNewWords(uniqueWords, newObj) {
+  var newWords = [];
+  for (myWord of newObj.description) {
+    if (!uniqueWords.has(myWord)) {
+      newWords.push(myWord);
+    }
+  }
+  return newWords;
+}
+
+function generateDaylistObj(split) {
+  var len = split.length
+  var time = split[len - 1].toLowerCase();
+  const days = new Set(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]);
+  // Determine if its a two word time (e.g. Early Morning)
+  var twoWordTime = false;
+  var beforeTime = split[len - 2].toLowerCase();
+  if (beforeTime == "late" || beforeTime == "early") {
+    twoWordTime = true;
+    time = split[len - 2] + " " + split[len - 1];
+  }
+
+  if (twoWordTime) {
+    var day = split[len - 3];
+  } else {
+    var day = split[len - 2]
+  }
+
+  // Some daylists dont have a day
+  if (!days.has(day)) {
+    day = ""
+    len += 1;
+  }
+
+  const daylistObj = {
+    day: day,
+    time: time,
+    timestamp: new Date().toISOString(),
+    description: split.slice(0, twoWordTime ? (len - 3) : (len - 2))
+  }
+
+  console.log("Daylist obj generated: " + JSON.stringify(daylistObj))
+  return daylistObj;
 }
 
 // Perform the Optical Character Recognition.
