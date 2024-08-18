@@ -39,7 +39,7 @@ function mergeAndUpdate(interaction, userId, split) {
   try {
     // Read existing content from JSON.
     readJsonFile((data) => {
-      const usersData = data.users[userId] || {};
+      const usersData = data.users[userId] || [];
 
       var globalUniqueWords = new Set();
       var yourUniqueWords = new Set();
