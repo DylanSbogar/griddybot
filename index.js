@@ -102,8 +102,6 @@ client.login(token);
 // Detect a message being sent in the channel, and handle it appropriately if necessary.
 client.on("messageCreate", async (message) => {
   const ozBargain = "https://www.ozbargain.com.au/node/";
-  const gnRegex = /\b(?:GM|GN)\b/i;
-  const gnRegexMatch = gnRegex.exec(message.content);
   const thanksRegex = /\b(thanks griddy)\b/i;
   const thanksRegexMatch = thanksRegex.exec(message.content);
   const loveRegex = /^i love (.*)/i;
@@ -111,11 +109,12 @@ client.on("messageCreate", async (message) => {
   // Ignore messages sent from griddybot.
   if (message.author.bot) return;
 
+  const msgAsLowercase = message.content.toLowerCase();
+
   if (message.content.startsWith(ozBargain)) {
     message.channel.send("Thanks just bought");
-  } else if (gnRegexMatch) {
-    // Repeat the first match of the regex back, in case a user says "gm gn" for example.
-    message.channel.send(gnRegexMatch[0]);
+  } else if (msgAsLowercase === "gm" || msgAsLowercase === "gn") {
+    message.channel.send(msgAsLowercase);
   } else if (thanksRegexMatch) {
     message.channel.send("No worries <3");
   } else {
