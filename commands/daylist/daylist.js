@@ -58,6 +58,8 @@ function mergeAndUpdate(interaction, userId, split) {
 
       // Write the new obj
       const newObj = generateDaylistObj(split);
+      console.log("Daylist obj generated: " + JSON.stringify(newObj))
+
       usersData.push(newObj);
       data.users[userId] = usersData;
 
@@ -96,6 +98,18 @@ function generateDaylistObj(split) {
   const days = new Set(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]);
   // Determine if its a two word time (e.g. Early Morning)
   var twoWordTime = false;
+
+  // Stupid edge case 'For this moment'
+  if (time == "moment") {
+    const daylistObj = {
+      day: "",
+      time: split[len - 3] + " " + split[len - 2] + " " + split[len - 1],
+      timestamp: new Date().toISOString(),
+      description: split.slice(0, len - 3)
+    }
+    return daylistObj;
+  }
+
   var beforeTime = split[len - 2].toLowerCase();
   if (beforeTime == "late" || beforeTime == "early") {
     twoWordTime = true;
@@ -121,7 +135,6 @@ function generateDaylistObj(split) {
     description: split.slice(0, twoWordTime ? (len - 3) : (len - 2))
   }
 
-  console.log("Daylist obj generated: " + JSON.stringify(daylistObj))
   return daylistObj;
 }
 
