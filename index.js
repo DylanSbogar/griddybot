@@ -70,7 +70,8 @@ client.once(Events.ClientReady, (readyClient) => {
               "No previous conversion rate found on file.";
             if (fs.existsSync("previous_rate.txt")) {
               const previousRate = fs.readFileSync("previous_rate.txt", "utf8");
-              previousRateMessage = `Previous conversion rate: ¥${previousRate}`;
+              previousRateMessage = `Previous conversion rate: ¥${previousRate} ${
+                (previousRate < rate) ? ':chart::chart:' : ':sob::sob:'}`;
             }
 
             // Write the current rate to the file, which will overwrite the previous value
