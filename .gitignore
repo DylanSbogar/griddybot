@@ -1,6 +1,8 @@
 node_modules
+previous_rate.txt
 config.json
 daylist.json
+daylist2.json
 drink.json
 eng.traineddata
 .eslintrc.js
