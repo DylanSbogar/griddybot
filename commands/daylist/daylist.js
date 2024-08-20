@@ -37,6 +37,7 @@ function writeJsonFile(content, callback) {
 // Function to merge and update user data
 function mergeAndUpdate(interaction, userId, split) {
   try {
+    split = split.map(v => v.toLowerCase());
     // Read existing content from JSON.
     readJsonFile((data) => {
       const usersData = data.users[userId] || [];
@@ -58,6 +59,8 @@ function mergeAndUpdate(interaction, userId, split) {
 
       // Write the new obj
       const newObj = generateDaylistObj(split);
+      console.log("Daylist obj generated: " + JSON.stringify(newObj))
+
       usersData.push(newObj);
       data.users[userId] = usersData;
 
@@ -92,11 +95,23 @@ function hasNewWords(uniqueWords, newObj) {
 
 function generateDaylistObj(split) {
   var len = split.length
-  var time = split[len - 1].toLowerCase();
+  var time = split[len - 1];
   const days = new Set(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]);
   // Determine if its a two word time (e.g. Early Morning)
   var twoWordTime = false;
-  var beforeTime = split[len - 2].toLowerCase();
+
+  // Stupid edge case 'For this moment'
+  if (time == "moment") {
+    const daylistObj = {
+      day: "",
+      time: split[len - 3] + " " + split[len - 2] + " " + split[len - 1],
+      timestamp: new Date().toISOString(),
+      description: split.slice(0, len - 3)
+    }
+    return daylistObj;
+  }
+
+  var beforeTime = split[len - 2];
   if (beforeTime == "late" || beforeTime == "early") {
     twoWordTime = true;
     time = split[len - 2] + " " + split[len - 1];
@@ -121,7 +136,6 @@ function generateDaylistObj(split) {
     description: split.slice(0, twoWordTime ? (len - 3) : (len - 2))
   }
 
-  console.log("Daylist obj generated: " + JSON.stringify(daylistObj))
   return daylistObj;
 }
 
