@@ -59,7 +59,9 @@ client.once(Events.ClientReady, (readyClient) => {
           `https://v6.exchangerate-api.com/v6/${exchangeApiKey}/pair/AUD/JPY`
         ).then((response) => {
           const data = response.json().then((value) => {
-            const rate = value.conversion_rate;
+            // Parse incoming 'rate' in case its treated as a string
+            const rate = parseFloat(value.conversion_rate);
+            const truncatedRate = rate.toFixed(2);
             const lastUpdateUtc = data.time_last_update_utc;
             const lastUpdateAest = moment(lastUpdateUtc)
               .tz("Australia/Sydney")
@@ -69,7 +71,8 @@ client.once(Events.ClientReady, (readyClient) => {
             let previousRateMessage =
               "No previous conversion rate found on file.";
             if (fs.existsSync("previous_rate.txt")) {
-              const previousRate = fs.readFileSync("previous_rate.txt", "utf8");
+              const previousRate = parseFloat(fs.readFileSync("previous_rate.txt", "utf8"));
+              const truncatedPrevRate = previousRate.toFixed(2);
               previousRateMessage = `Previous conversion rate: ¥${previousRate} ${
                 (previousRate < rate) ? ':chart::chart:' : ':sob::sob:'}`;
             }
@@ -78,7 +81,7 @@ client.once(Events.ClientReady, (readyClient) => {
             fs.writeFileSync("previous_rate.txt", rate.toString());
 
             channel.send(
-              `The current conversion rate of 1 AUD to JPY is: ¥${rate}, as of ${lastUpdateAest} AEST.\n${previousRateMessage}`
+              `The current conversion rate of 1 AUD to JPY is: ¥${truncatedRate}, as of ${lastUpdateAest} AEST.\n${previousRateMessage}`
             );
           });
         });
