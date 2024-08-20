@@ -1,12 +1,3 @@
-const {
-  SlashCommandBuilder,
-  ApplicationCommandPermissionType,
-} = require("discord.js");
-const Tesseract = require("tesseract.js");
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
-
 const folderPath = __dirname;
 const jsonFile = path.join(folderPath, "daylist2.json");
 
@@ -37,7 +28,7 @@ function writeJsonFile(content, callback) {
 // Function to merge and update user data
 function mergeAndUpdate(interaction, userId, split) {
   try {
-    split = split.map(v => v.toLowerCase());
+    split = split.map((v) => v.toLowerCase());
     // Read existing content from JSON.
     readJsonFile((data) => {
       const usersData = data.users[userId] || [];
@@ -59,7 +50,7 @@ function mergeAndUpdate(interaction, userId, split) {
 
       // Write the new obj
       const newObj = generateDaylistObj(split);
-      console.log("Daylist obj generated: " + JSON.stringify(newObj))
+      console.log("Daylist obj generated: " + JSON.stringify(newObj));
 
       usersData.push(newObj);
       data.users[userId] = usersData;
@@ -68,8 +59,12 @@ function mergeAndUpdate(interaction, userId, split) {
       writeJsonFile(data, () => {
         const replyContent = [
           split.join(" "),
-          `New words for you: ${hasNewWords(yourUniqueWords, newObj).join(', ')}`,
-          `New words for all: ${hasNewWords(globalUniqueWords, newObj).join(', ')}`,
+          `New words for you: ${hasNewWords(yourUniqueWords, newObj).join(
+            ", "
+          )}`,
+          `New words for all: ${hasNewWords(globalUniqueWords, newObj).join(
+            ", "
+          )}`,
         ]
           .filter(Boolean)
           .join("\n");
@@ -94,9 +89,17 @@ function hasNewWords(uniqueWords, newObj) {
 }
 
 function generateDaylistObj(split) {
-  var len = split.length
+  var len = split.length;
   var time = split[len - 1];
-  const days = new Set(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]);
+  const days = new Set([
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ]);
   // Determine if its a two word time (e.g. Early Morning)
   var twoWordTime = false;
 
@@ -106,8 +109,8 @@ function generateDaylistObj(split) {
       day: "",
       time: split[len - 3] + " " + split[len - 2] + " " + split[len - 1],
       timestamp: new Date().toISOString(),
-      description: split.slice(0, len - 3)
-    }
+      description: split.slice(0, len - 3),
+    };
     return daylistObj;
   }
 
@@ -120,12 +123,12 @@ function generateDaylistObj(split) {
   if (twoWordTime) {
     var day = split[len - 3];
   } else {
-    var day = split[len - 2]
+    var day = split[len - 2];
   }
 
   // Some daylists dont have a day
   if (!days.has(day)) {
-    day = ""
+    day = "";
     len += 1;
   }
 
@@ -133,8 +136,8 @@ function generateDaylistObj(split) {
     day: day,
     time: time,
     timestamp: new Date().toISOString(),
-    description: split.slice(0, twoWordTime ? (len - 3) : (len - 2))
-  }
+    description: split.slice(0, twoWordTime ? len - 3 : len - 2),
+  };
 
   return daylistObj;
 }

@@ -1,17 +1,18 @@
-const { SlashCommandBuilder } = require("discord.js");
-const fetch = require("node-fetch");
-const { exchangeApiKey } = require("../../config.json");
-const moment = require("moment-timezone");
+
+import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
+import 'dotenv/config'
+import moment from 'moment';
+const { EXCHANGERATE_API_KEY } = process.env;
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("yen")
     .setDescription("Get the current conversion rate from AUD to JPY"),
 
-  async execute(interaction) {
+  async execute(interaction: CommandInteraction) {
     try {
       const response = await fetch(
-        `https://v6.exchangerate-api.com/v6/${exchangeApiKey}/pair/AUD/JPY`
+        `https://v6.exchangerate-api.com/v6/${EXCHANGERATE_API_KEY as string}/pair/AUD/JPY`
       );
       const data = await response.json();
 

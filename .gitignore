@@ -10,3 +10,6 @@ commands/drink/drink*.json
 commands/daylist/BASELINE_daylist.json
 /images/
 .vs/
+.env
+node_modules
+dist
