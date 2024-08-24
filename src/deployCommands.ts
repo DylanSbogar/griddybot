@@ -1,26 +1,22 @@
 import "dotenv/config";
-import {
-  REST,
-  RESTPostAPIApplicationCommandsJSONBody,
-  Routes,
-} from "discord.js";
-import { readdirSync } from "fs";
-import path from "path";
+import { REST, Routes } from "discord.js";
 import { commands } from "./commands";
 
 const { CLIENT_ID, TOKEN } = process.env;
 
 const commandsData = Object.values(commands).map((command) => command.data);
 
-const rest = new REST({ version: '10' }).setToken(TOKEN as string);
+const rest = new REST({ version: "10" }).setToken(TOKEN as string);
 
 type DeployCommandsProps = {
   guildId: string;
 };
 
-export async function deployCommands({guildId}: DeployCommandsProps) {
+export async function deployCommands({ guildId }: DeployCommandsProps) {
   try {
-    console.log(`Started refreshing application (/) commands.`);
+    console.log(
+      `Started refreshing ${commandsData.length} application commands.`
+    );
 
     await rest.put(
       Routes.applicationGuildCommands(CLIENT_ID as string, guildId),
@@ -29,9 +25,10 @@ export async function deployCommands({guildId}: DeployCommandsProps) {
       }
     );
 
-    console.log(`Successfully reloaded application (/) commands.`);
+    console.log(
+      `Successfully reloaded ${commandsData.length} application commands.`
+    );
   } catch (err) {
     console.error(err);
   }
 }
-

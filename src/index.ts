@@ -1,10 +1,10 @@
 import "dotenv/config";
 import { Client, GatewayIntentBits } from "discord.js";
 import ready from "./listeners/ready";
-import guildCreate from "./listeners/guildCreate";
 import interactionCreate from "./listeners/interactionCreate";
+import { deployCommands } from "./deployCommands";
 
-const { TOKEN } = process.env;
+const { TOKEN, GUILD_ID } = process.env;
 
 const client = new Client({
   intents: [
@@ -15,9 +15,9 @@ const client = new Client({
   ],
 });
 
-ready(client);
+deployCommands({guildId: GUILD_ID as string});
 
-guildCreate(client);
+ready(client);
 
 interactionCreate(client);
 

@@ -1,7 +1,4 @@
-import {
-  SlashCommandBuilder,
-  ChatInputCommandInteraction,
-} from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
 import fs from "fs";
 import path from "path";
 
@@ -57,20 +54,21 @@ function remove(
   }
 }
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("undodaylist")
-    .setDescription("Undoes your latest daylist"),
-  async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-    try {
-      // Acknowledge the interaction immediately
-      await interaction.deferReply();
-      remove(interaction, interaction.user.id);
-    } catch (error) {
-      console.error("Error in execute:", error);
-      await interaction.followUp(
-        "An unexpected error occurred. Please check the logs."
-      );
-    }
-  },
-};
+export const data = new SlashCommandBuilder()
+  .setName("undodaylist")
+  .setDescription("Undoes your latest daylist");
+
+export async function execute(
+  interaction: ChatInputCommandInteraction
+): Promise<void> {
+  try {
+    // Acknowledge the interaction immediately
+    await interaction.deferReply();
+    remove(interaction, interaction.user.id);
+  } catch (error) {
+    console.error("Error in execute:", error);
+    await interaction.followUp(
+      "An unexpected error occurred. Please check the logs."
+    );
+  }
+}

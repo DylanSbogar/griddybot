@@ -1,23 +1,23 @@
 import * as yen from "./currency-conversion/currencyConversion";
 import * as daylist from "./daylist/daylist";
-import * as undoDaylist from "./daylist/daylistUndo";
-import * as itemShop from "./fortnite/itemShop";
-import * as coinFlip from "./fun/coinFlip";
-import * as sendGen from "./images/sendgeneral";
-import * as uploadGen from "./images/uploadgeneral";
-import * as sendPoint from "./images/sendpoint";
-import * as uploadPoint from "./images/uploadpoint";
+import * as undodaylist from "./daylist/daylistUndo";
+import * as itemshop from "./fortnite/itemShop";
+import * as coinflip from './fun/coinFlip'
+import * as trash from "./images/sendgeneral";
+import * as uploadtrash from "./images/uploadgeneral";
+import * as lookatthis from "./images/sendpoint";
+import * as uploadlookatthis from "./images/uploadpoint";
 import * as mcServer from "./minecraft/minecraft";
 
 export const commands = {
   yen,
   daylist,
-  // undoDaylist,
-  // itemShop,
-  // coinFlip,
-  // sendGen,
-  // uploadGen,
-  // sendPoint,
-  // uploadPoint,
+  undodaylist,
+  itemshop,
+  coinflip,
+  // trash,
+  // uploadtrash,
+  // lookatthis,
+  // uploadlookatthis,
   // mcServer,
 };
