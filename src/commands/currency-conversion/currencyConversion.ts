@@ -1,4 +1,4 @@
-import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import "dotenv/config";
 import moment from "moment";
 import fetch from "node-fetch";
@@ -9,7 +9,7 @@ export const data = new SlashCommandBuilder()
   .setDescription("Get the current conversion rate from AUD to JPY.");
 
 // TODO: Make this use a common function that the cronjob does
-export async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
   try {
     const response = await fetch(
       `https://v6.exchangerate-api.com/v6/${
