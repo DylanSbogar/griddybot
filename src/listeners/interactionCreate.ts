@@ -1,4 +1,4 @@
-import { Client } from "discord.js";
+import { ChatInputCommandInteraction, Client } from "discord.js";
 import { commands } from "../commands";
 
 export default (client: Client): void => {
@@ -8,7 +8,7 @@ export default (client: Client): void => {
     }
     const { commandName } = interaction;
     if (commands[commandName as keyof typeof commands]) {
-      commands[commandName as keyof typeof commands].execute(interaction);
+      commands[commandName as keyof typeof commands].execute(interaction as ChatInputCommandInteraction);
     }
   });
 };

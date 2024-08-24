@@ -2,6 +2,7 @@ import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
   Attachment,
+  CommandInteraction,
 } from "discord.js";
 import path from "path";
 import fs from "fs";
@@ -194,81 +195,104 @@ function deleteImage(imagePath: string): void {
   });
 }
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("daylist")
-    .setDescription("Testing bot reading slash commands")
-    .addStringOption((option) =>
-      option
-        .setName("daylist")
-        .setDescription("The name of the daylist.")
-        .setRequired(false)
-    )
-    .addAttachmentOption((option) =>
-      option
-        .setName("file")
-        .setDescription("The file you wish to upload")
-        .setRequired(false)
-    ),
-  async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-    try {
-      // Acknowledge the interaction immediately
-      await interaction.deferReply();
+export const data = new SlashCommandBuilder()
+  .setName("daylist")
+  .setDescription("Testing bot reading slash commands")
+  .addStringOption((option) =>
+    option
+      .setName("daylist")
+      .setDescription("The name of the daylist.")
+      .setRequired(false)
+  )
+  .addAttachmentOption((option) =>
+    option
+      .setName("file")
+      .setDescription("The file you wish to upload")
+      .setRequired(false)
+  );
 
-      const hasAttachment: Attachment | null =
-        interaction.options.getAttachment("file") || null;
-      const daylistName: string | null =
-        interaction.options.getString("daylist") || null;
+export async function execute(
+  interaction: ChatInputCommandInteraction
+): Promise<void> {
+  try {
+    // Acknowledge the interaction immediately
+    await interaction.deferReply();
 
-      if (!hasAttachment && !daylistName) {
-        // Neither option provided
-        await interaction.editReply({
-          content: "Please provide either an attachment or custom text.",
-        });
-        return;
-      }
+    const hasAttachment: Attachment | null =
+      interaction.options.getAttachment("file") || null;
+    const daylistName: string | null =
+      interaction.options.getString("daylist") || null;
 
-      if (hasAttachment) {
-        const imagePath = "downloaded_image.png";
-        const imageUrl: string = hasAttachment.url;
-
-        // Download the image using axios
-        try {
-          const response = await axios({
-            method: "get",
-            url: imageUrl,
-            responseType: "stream",
-          });
-
-          const writer = fs.createWriteStream(imagePath);
-          response.data.pipe(writer);
-
-          writer.on("finish", () => {
-            // Image downloaded, now perform OCR
-            performOCR(interaction, imagePath, daylistName);
-          });
-
-          writer.on("error", (error) => {
-            console.error(`Error writing the image file: ${error.message}`);
-            interaction.followUp("Error processing the image. Please try again.");
-          });
-        } catch (error) {
-          console.error(`Error downloading image: ${error}`);
-          // Reply with an error message
-          await interaction.followUp("Error downloading image. Please try again.");
-        }
-      } else if (daylistName) {
-        // Split daylistName by blank spaces.
-        const splitDaylistName: string[] = daylistName.split(" ");
-        // Pass the user ID to the mergeAndUpdate function
-        mergeAndUpdate(interaction, interaction.user.id, splitDaylistName);
-      }
-    } catch (error) {
-      console.error("Error in execute:", error);
-      await interaction.followUp(
-        "An unexpected error occurred. Please check the logs."
-      );
+    if (!hasAttachment && !daylistName) {
+      // Neither option provided
+      await interaction.editReply({
+        content: "Please provide either an attachment or custom text.",
+      });
+      return;
     }
-  },
-};
 
+    if (hasAttachment) {
+      const imagePath = "downloaded_image.png";
+      const imageUrl: string = hasAttachment.url;
+
+      // Download the image using axios
+      try {
+        const response = await axios({
+          method: "get",
+          url: imageUrl,
+          responseType: "stream",
+        });
+
+        const writer = fs.createWriteStream(imagePath);
+        response.data.pipe(writer);
+
+        writer.on("finish", () => {
+          // Image downloaded, now perform OCR
+          performOCR(interaction, imagePath, daylistName);
+        });
+
+        writer.on("error", (error) => {
+          console.error(`Error writing the image file: ${error.message}`);
+          interaction.followUp("Error processing the image. Please try again.");
+        });
+      } catch (error) {
+        console.error(`Error downloading image: ${error}`);
+        // Reply with an error message
+        await interaction.followUp(
+          "Error downloading image. Please try again."
+        );
+      }
+    } else if (daylistName) {
+      // Split daylistName by blank spaces.
+      const splitDaylistName: string[] = daylistName.split(" ");
+      // Pass the user ID to the mergeAndUpdate function
+      mergeAndUpdate(interaction, interaction.user.id, splitDaylistName);
+    }
+  } catch (error) {
+    console.error("Error in execute:", error);
+    await interaction.followUp(
+      "An unexpected error occurred. Please check the logs."
+    );
+  }
+}
+
+// module.exports = {
+//   data: new SlashCommandBuilder()
+//     .setName("daylist")
+//     .setDescription("Testing bot reading slash commands")
+//     .addStringOption((option) =>
+//       option
+//         .setName("daylist")
+//         .setDescription("The name of the daylist.")
+//         .setRequired(false)
+//     )
+//     .addAttachmentOption((option) =>
+//       option
+//         .setName("file")
+//         .setDescription("The file you wish to upload")
+//         .setRequired(false)
+//     ),
+//   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+
+//   },
+// };
