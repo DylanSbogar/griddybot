@@ -3,6 +3,7 @@ import { CronJob } from "cron";
 import moment from "moment-timezone";
 import fs from "fs";
 import 'dotenv/config';
+import fetch from "node-fetch";
 
 const { AUTO_EXCHANGERATE_GUILD_ID, EXCHANGERATE_API_KEY } = process.env;
 
@@ -15,7 +16,7 @@ export default (client: Client): void => {
     console.log(`Ready! Logged in as ${client.user.tag}`);
 
     const exchangeRateJob = new CronJob(
-      "30 10 * * *",
+      "30 10 * * 1-5",
       async function () {
         const channel = client.channels.cache.get(
           AUTO_EXCHANGERATE_GUILD_ID as string

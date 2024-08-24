@@ -1,6 +1,4 @@
-import { CommandInteraction } from "discord.js";
-
-const { SlashCommandBuilder } = require("discord.js");
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 
 // Utility function to create a delay using Promises
 function wait(ms: number) {
@@ -11,7 +9,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("coinflip")
     .setDescription("Flip a coin!"),
-  async execute(interaction: CommandInteraction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.isCommand()) return;
 
     if (interaction.commandName === "coinflip") {

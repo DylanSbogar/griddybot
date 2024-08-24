@@ -1,17 +1,15 @@
-const {
+import {
   SlashCommandBuilder,
-  ApplicationCommandPermissionType,
-} = require("discord.js");
-const Tesseract = require("tesseract.js");
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
+  ChatInputCommandInteraction,
+} from "discord.js";
+import fs from "fs";
+import path from "path";
 
 const folderPath = __dirname;
 const jsonFile = path.join(folderPath, "daylist2.json");
 
 // Function to read content from a JSON file
-function readJsonFile(callback) {
+function readJsonFile(callback: (data: any) => void): void {
   fs.readFile(jsonFile, "utf8", (err, data) => {
     if (err) {
       console.error(`Error reading the JSON file: ${err}`);
@@ -23,7 +21,7 @@ function readJsonFile(callback) {
 }
 
 // Function to write content to a JSON file
-function writeJsonFile(content, callback) {
+function writeJsonFile(content: any, callback: () => void): void {
   fs.writeFile(jsonFile, JSON.stringify(content, null, 2), "utf8", (err) => {
     if (err) {
       console.error(`Error writing to the JSON file: ${err}`);
@@ -34,22 +32,21 @@ function writeJsonFile(content, callback) {
   });
 }
 
-// Function to merge and update user data
-function remove(interaction, userId) {
+// Function to remove the latest daylist entry for a user
+function remove(
+  interaction: ChatInputCommandInteraction,
+  userId: string
+): void {
   try {
-    // Read existing content from JSON.
+    // Read existing content from JSON
     readJsonFile((data) => {
-      const usersData = data.users[userId] || [];
-      var popped = usersData.pop();
+      const usersData: any[] = data.users[userId] || [];
+      const popped = usersData.pop();
       data.users[userId] = usersData;
 
-      // Write the updated data out to JSON.
+      // Write the updated data out to JSON
       writeJsonFile(data, () => {
-        const replyContent = [
-          `Removed: ${JSON.stringify(popped)}`
-        ]
-          .filter(Boolean)
-          .join("\n");
+        const replyContent = `Removed: ${JSON.stringify(popped)}`;
         interaction.followUp({
           content: replyContent,
         });
@@ -64,12 +61,11 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("undodaylist")
     .setDescription("Undoes your latest daylist"),
-  async execute(interaction) {
+  async execute(interaction: ChatInputCommandInteraction): Promise<void> {
     try {
       // Acknowledge the interaction immediately
       await interaction.deferReply();
       remove(interaction, interaction.user.id);
-      
     } catch (error) {
       console.error("Error in execute:", error);
       await interaction.followUp(

@@ -1,8 +1,18 @@
+import {
+  SlashCommandBuilder,
+  ChatInputCommandInteraction,
+  Attachment,
+} from "discord.js";
+import path from "path";
+import fs from "fs";
+import axios from "axios";
+import Tesseract from "tesseract.js";
+
 const folderPath = __dirname;
 const jsonFile = path.join(folderPath, "daylist2.json");
 
 // Function to read content from a JSON file
-function readJsonFile(callback) {
+function readJsonFile(callback: (data: any) => void): void {
   fs.readFile(jsonFile, "utf8", (err, data) => {
     if (err) {
       console.error(`Error reading the JSON file: ${err}`);
@@ -14,7 +24,7 @@ function readJsonFile(callback) {
 }
 
 // Function to write content to a JSON file
-function writeJsonFile(content, callback) {
+function writeJsonFile(content: any, callback: () => void): void {
   fs.writeFile(jsonFile, JSON.stringify(content, null, 2), "utf8", (err) => {
     if (err) {
       console.error(`Error writing to the JSON file: ${err}`);
@@ -26,22 +36,26 @@ function writeJsonFile(content, callback) {
 }
 
 // Function to merge and update user data
-function mergeAndUpdate(interaction, userId, split) {
+function mergeAndUpdate(
+  interaction: ChatInputCommandInteraction,
+  userId: string,
+  split: string[]
+): void {
   try {
     split = split.map((v) => v.toLowerCase());
     // Read existing content from JSON.
     readJsonFile((data) => {
-      const usersData = data.users[userId] || [];
+      const usersData: any[] = data.users[userId] || [];
 
-      var globalUniqueWords = new Set();
-      var yourUniqueWords = new Set();
+      const globalUniqueWords = new Set<string>();
+      const yourUniqueWords = new Set<string>();
 
       // Populate the sets of unique words
-      for (user in data.users) {
-        for (daylistObj of data.users[user]) {
-          for (word of daylistObj.description) {
+      for (const user in data.users) {
+        for (const daylistObj of data.users[user]) {
+          for (const word of daylistObj.description) {
             globalUniqueWords.add(word);
-            if (user == userId) {
+            if (user === userId) {
               yourUniqueWords.add(word);
             }
           }
@@ -78,9 +92,10 @@ function mergeAndUpdate(interaction, userId, split) {
   }
 }
 
-function hasNewWords(uniqueWords, newObj) {
-  var newWords = [];
-  for (myWord of newObj.description) {
+// Function to check for new words
+function hasNewWords(uniqueWords: Set<string>, newObj: any): string[] {
+  const newWords: string[] = [];
+  for (const myWord of newObj.description) {
     if (!uniqueWords.has(myWord)) {
       newWords.push(myWord);
     }
@@ -88,9 +103,10 @@ function hasNewWords(uniqueWords, newObj) {
   return newWords;
 }
 
-function generateDaylistObj(split) {
-  var len = split.length;
-  var time = split[len - 1];
+// Function to generate the daylist object
+function generateDaylistObj(split: string[]): any {
+  let len = split.length;
+  let time = split[len - 1];
   const days = new Set([
     "monday",
     "tuesday",
@@ -100,57 +116,54 @@ function generateDaylistObj(split) {
     "saturday",
     "sunday",
   ]);
-  // Determine if its a two word time (e.g. Early Morning)
-  var twoWordTime = false;
+  // Determine if it's a two-word time (e.g. Early Morning)
+  let twoWordTime = false;
 
-  // Stupid edge case 'For this moment'
-  if (time == "moment") {
-    const daylistObj = {
+  // Handle the edge case 'For this moment'
+  if (time === "moment") {
+    return {
       day: "",
-      time: split[len - 3] + " " + split[len - 2] + " " + split[len - 1],
+      time: split.slice(len - 3).join(" "),
       timestamp: new Date().toISOString(),
       description: split.slice(0, len - 3),
     };
-    return daylistObj;
   }
 
-  var beforeTime = split[len - 2];
-  if (beforeTime == "late" || beforeTime == "early") {
+  const beforeTime = split[len - 2];
+  if (beforeTime === "late" || beforeTime === "early") {
     twoWordTime = true;
-    time = split[len - 2] + " " + split[len - 1];
+    time = `${beforeTime} ${time}`;
   }
 
-  if (twoWordTime) {
-    var day = split[len - 3];
-  } else {
-    var day = split[len - 2];
-  }
+  let day = twoWordTime ? split[len - 3] : split[len - 2];
 
-  // Some daylists dont have a day
+  // Some daylists don't have a day
   if (!days.has(day)) {
     day = "";
     len += 1;
   }
 
-  const daylistObj = {
+  return {
     day: day,
     time: time,
     timestamp: new Date().toISOString(),
     description: split.slice(0, twoWordTime ? len - 3 : len - 2),
   };
-
-  return daylistObj;
 }
 
 // Perform the Optical Character Recognition.
-async function performOCR(interaction, imagePath, daylistName) {
+async function performOCR(
+  interaction: ChatInputCommandInteraction,
+  imagePath: string,
+  daylistName: string | null
+): Promise<void> {
   try {
     const {
       data: { text },
     } = await Tesseract.recognize(imagePath, "eng");
 
     // Split the string by spaces and newlines, in the case of mobile screenshots.
-    let splitText = text
+    const splitText = text
       .split(/[\s\n]+/)
       .map((str) => str.trim())
       .filter(Boolean);
@@ -160,7 +173,7 @@ async function performOCR(interaction, imagePath, daylistName) {
     // Delete the downloaded image after processing.
     deleteImage(imagePath);
   } catch (error) {
-    console.error(`Error performing OCR: ${error.message}`);
+    console.error(`Error performing OCR: ${error}`);
 
     // Delete the downloaded image in case of an error.
     deleteImage(imagePath);
@@ -171,7 +184,7 @@ async function performOCR(interaction, imagePath, daylistName) {
 }
 
 // Function to delete an image
-function deleteImage(imagePath) {
+function deleteImage(imagePath: string): void {
   fs.unlink(imagePath, (err) => {
     if (err) {
       console.error(`Error deleting image: ${err}`);
@@ -197,49 +210,56 @@ module.exports = {
         .setDescription("The file you wish to upload")
         .setRequired(false)
     ),
-  async execute(interaction) {
+  async execute(interaction: ChatInputCommandInteraction): Promise<void> {
     try {
       // Acknowledge the interaction immediately
       await interaction.deferReply();
 
-      const hasAttachment = interaction.options.get("file") || null;
-      const daylistName = interaction.options.getString("daylist") || null;
+      const hasAttachment: Attachment | null =
+        interaction.options.getAttachment("file") || null;
+      const daylistName: string | null =
+        interaction.options.getString("daylist") || null;
 
-      if (hasAttachment == null && daylistName == null) {
+      if (!hasAttachment && !daylistName) {
         // Neither option provided
         await interaction.editReply({
           content: "Please provide either an attachment or custom text.",
-          ephemeral: true,
         });
         return;
       }
 
-      if (hasAttachment != null) {
+      if (hasAttachment) {
         const imagePath = "downloaded_image.png";
-        const imageUrl = interaction.options.getAttachment("file").url;
+        const imageUrl: string = hasAttachment.url;
 
         // Download the image using axios
-        await axios({
-          method: "get",
-          url: imageUrl,
-          responseType: "stream",
-        })
-          .then((response) => {
-            response.data.pipe(fs.createWriteStream(imagePath));
-
-            response.data.on("end", () => {
-              // Image downloaded, now perform OCR
-              performOCR(interaction, imagePath, daylistName);
-            });
-          })
-          .catch((error) => {
-            console.error(`Error downloading image: ${error.message}`);
-            // Reply with an error message
-            interaction.followUp("Error downloading image. Please try again.");
+        try {
+          const response = await axios({
+            method: "get",
+            url: imageUrl,
+            responseType: "stream",
           });
-      } else if (daylistName != null) {
+
+          const writer = fs.createWriteStream(imagePath);
+          response.data.pipe(writer);
+
+          writer.on("finish", () => {
+            // Image downloaded, now perform OCR
+            performOCR(interaction, imagePath, daylistName);
+          });
+
+          writer.on("error", (error) => {
+            console.error(`Error writing the image file: ${error.message}`);
+            interaction.followUp("Error processing the image. Please try again.");
+          });
+        } catch (error) {
+          console.error(`Error downloading image: ${error}`);
+          // Reply with an error message
+          await interaction.followUp("Error downloading image. Please try again.");
+        }
+      } else if (daylistName) {
         // Split daylistName by blank spaces.
-        const splitDaylistName = daylistName.split(" ");
+        const splitDaylistName: string[] = daylistName.split(" ");
         // Pass the user ID to the mergeAndUpdate function
         mergeAndUpdate(interaction, interaction.user.id, splitDaylistName);
       }
@@ -251,3 +271,4 @@ module.exports = {
     }
   },
 };
+
