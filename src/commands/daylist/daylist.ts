@@ -2,7 +2,6 @@ import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
   Attachment,
-  CommandInteraction,
 } from "discord.js";
 import path from "path";
 import fs from "fs";
@@ -275,24 +274,3 @@ export async function execute(
     );
   }
 }
-
-// module.exports = {
-//   data: new SlashCommandBuilder()
-//     .setName("daylist")
-//     .setDescription("Testing bot reading slash commands")
-//     .addStringOption((option) =>
-//       option
-//         .setName("daylist")
-//         .setDescription("The name of the daylist.")
-//         .setRequired(false)
-//     )
-//     .addAttachmentOption((option) =>
-//       option
-//         .setName("file")
-//         .setDescription("The file you wish to upload")
-//         .setRequired(false)
-//     ),
-//   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-
-//   },
-// };
