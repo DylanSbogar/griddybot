@@ -7,31 +7,7 @@ import {
 import path from "path";
 import fs from "fs";
 
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 const topic = "lookatthis";
-
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName(topic)
-    .setDescription("squeeoonk"),
-  async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-    const subfolder = topic;
-    const imageFolder = path.resolve(__dirname, "../..", "images", subfolder);
-
-    if (fs.existsSync(imageFolder)) {
-      await sendRandomImage(interaction, imageFolder);
-    } else {
-      console.log(`Specified subfolder not found. Attempted path: ${imageFolder}`);
-      await interaction.reply({
-        content: `The specified subfolder "${subfolder}" does not exist. Upload something first pls.`,
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-  },
-};
 
 async function sendRandomImage(
   interaction: ChatInputCommandInteraction,
@@ -56,6 +32,29 @@ async function sendRandomImage(
     console.error("Error handling random image:", error);
     await interaction.reply({
       content: "An error occurred while processing the command.",
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+}
+
+export const data = new SlashCommandBuilder()
+  .setName(topic)
+  .setDescription("squeeoonk");
+
+export async function execute(
+  interaction: ChatInputCommandInteraction
+): Promise<void> {
+  const subfolder = topic;
+  const imageFolder = path.resolve(__dirname, "../..", "images", subfolder);
+
+  if (fs.existsSync(imageFolder)) {
+    await sendRandomImage(interaction, imageFolder);
+  } else {
+    console.log(
+      `Specified subfolder not found. Attempted path: ${imageFolder}`
+    );
+    await interaction.reply({
+      content: `The specified subfolder "${subfolder}" does not exist. Upload something first pls.`,
       flags: MessageFlags.Ephemeral,
     });
   }

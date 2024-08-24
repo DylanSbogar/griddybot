@@ -41,7 +41,7 @@ export const data = new SlashCommandBuilder()
   .setName(topic)
   .setDescription("garbage");
 
-export async function execute(interaction: ChatInputCommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const subfolder = topic;
   const imageFolder = path.resolve(__dirname, "../..", "images", subfolder);
 
