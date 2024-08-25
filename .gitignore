@@ -6,7 +6,10 @@ daylist2.json
 drink.json
 eng.traineddata
 .eslintrc.js
-commands/drink/drink*.json
-commands/daylist/BASELINE_daylist.json
-/images/
+src/commands/drink/drink*.json
+src/commands/daylist/BASELINE_daylist.json
+src/images/
 .vs/
+.env
+node_modules
+dist
