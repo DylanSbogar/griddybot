@@ -1,8 +1,9 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
-const folderPath = __dirname;
+const folderPath = fileURLToPath(import.meta.url);
 const jsonFile = path.join(folderPath, "daylist2.json");
 
 // Function to read content from a JSON file

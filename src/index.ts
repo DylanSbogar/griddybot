@@ -1,9 +1,9 @@
 import "dotenv/config";
 import { Client, GatewayIntentBits } from "discord.js";
-import ready from "./listeners/ready";
-import interactionCreate from "./listeners/interactionCreate";
-import { deployCommands } from "./deployCommands";
-import messageCreate from "./listeners/messageCreate";
+import ready from "./listeners/ready.js";
+import interactionCreate from "./listeners/interactionCreate.js";
+import { deployCommands } from "./deployCommands.js";
+import messageCreate from "./listeners/messageCreate.js";
 
 const { TOKEN, GUILD_ID } = process.env;
 

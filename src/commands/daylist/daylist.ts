@@ -7,8 +7,9 @@ import path from "path";
 import fs from "fs";
 import axios from "axios";
 import Tesseract from "tesseract.js";
+import { fileURLToPath } from "url";
 
-const folderPath = __dirname;
+const folderPath = fileURLToPath(import.meta.url);
 const jsonFile = path.join(folderPath, "daylist2.json");
 
 // Function to read content from a JSON file

@@ -6,6 +6,7 @@ import {
 } from "discord.js";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 
 const topic = "lookatthis";
 
@@ -45,7 +46,12 @@ export async function execute(
   interaction: ChatInputCommandInteraction
 ): Promise<void> {
   const subfolder = topic;
-  const imageFolder = path.resolve(__dirname, "../..", "images", subfolder);
+  const imageFolder = path.resolve(
+    fileURLToPath(import.meta.url),
+    "../../..",
+    "images",
+    subfolder
+  );
 
   if (fs.existsSync(imageFolder)) {
     await sendRandomImage(interaction, imageFolder);
