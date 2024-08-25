@@ -8,7 +8,7 @@ import * as uploadtrash from "./images/uploadgeneral.js";
 import * as lookatthis from "./images/sendpoint.js";
 import * as uploadlookatthis from "./images/uploadpoint.js";
 import * as minecraft from "./minecraft/minecraft.js";
-import * as emote from "./fun/seventv.js";
+import * as emote from "./fun/emote.js";
 
 export const commands = {
   yen,
