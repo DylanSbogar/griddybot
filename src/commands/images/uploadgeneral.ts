@@ -6,6 +6,7 @@ import {
 import path from "path";
 import fs from "fs";
 import fetch from "node-fetch";
+import { fileURLToPath } from "url";
 
 const topic = "trash";
 
@@ -25,7 +26,11 @@ export async function execute(
   const imageAttachment = interaction.options.getAttachment("image");
   const subfolder = topic;
 
-  const baseImagesFolder = path.join(__dirname, "../..", "images");
+  const baseImagesFolder = path.join(
+    fileURLToPath(import.meta.url),
+    "../../..",
+    "images"
+  );
 
   let filePath: string;
   if (subfolder) {

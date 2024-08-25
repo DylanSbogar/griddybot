@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { REST, Routes } from "discord.js";
-import { commands } from "./commands";
+import { commands } from "./commands/index.js";
 
 const { CLIENT_ID, TOKEN } = process.env;
 
@@ -19,7 +19,7 @@ export async function deployCommands({ guildId }: DeployCommandsProps) {
     );
 
     await rest.put(
-      Routes.applicationGuildCommands(CLIENT_ID as string, guildId),
+      Routes.applicationCommands(CLIENT_ID as string),
       {
         body: commandsData,
       }
