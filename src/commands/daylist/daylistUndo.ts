@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const folderPath = fileURLToPath(import.meta.url);
-const jsonFile = path.join(folderPath, "daylist2.json");
+const jsonFile = path.join(folderPath, "../", "daylist2.json");
 
 // Function to read content from a JSON file
 function readJsonFile(callback: (data: any) => void): void {

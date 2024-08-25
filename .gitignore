@@ -1,12 +1,10 @@
 node_modules
 previous_rate.txt
 config.json
-daylist.json
-daylist2.json
+src/commands/daylist/*.json
 drink.json
 eng.traineddata
 .eslintrc.js
-src/commands/drink/drink*.json
 src/commands/daylist/BASELINE_daylist.json
 src/images/
 .vs/
