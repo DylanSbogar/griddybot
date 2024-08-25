@@ -61,16 +61,7 @@ const query = gql`
   }
 `;
 
-const endpoint = `https://7tv.io/v3/gql`;
-
-const graphQLClient = new GraphQLClient(endpoint, {
-  method: `GET`,
-  jsonSerializer: {
-    parse: JSON.parse,
-    stringify: JSON.stringify,
-  },
-});
-
+// Shoutout GPT for these interfaces
 interface Emote {
   id: string;
   name: string;
@@ -112,6 +103,16 @@ interface GraphQLResponse {
   emotes: EmoteSearchResult;
 }
 
+const endpoint = `https://7tv.io/v3/gql`;
+
+const graphQLClient = new GraphQLClient(endpoint, {
+  method: `GET`,
+  jsonSerializer: {
+    parse: JSON.parse,
+    stringify: JSON.stringify,
+  },
+});
+
 export const data = new SlashCommandBuilder()
   .setName("emote")
   .setDescription("Retrieve your favourite 7tv emotes")
@@ -125,29 +126,25 @@ export const data = new SlashCommandBuilder()
 async function downloadImage(
   url: string,
   filePath: string,
-  interaction: ChatInputCommandInteraction
+  interaction: ChatInputCommandInteraction,
+  extension: string
 ) {
   try {
-    const response = await fetch(url);
+    const response = await fetch(`${url}${extension}`);
+    const emotePath = `${filePath}${extension}`;
 
-    if (!response.ok) {
-      if (response.status === 400) {
-        const dotIndex = url.lastIndexOf(".");
-        const newUrl = `${url.substring(0, dotIndex)}.png`;
-        await downloadImage(newUrl, filePath, interaction);
-      } else {
-        if (!interaction.replied && !interaction.deferred) {
-          await interaction.reply(`Failed to fetch image.`);
-        }
-      }
-      return;
+    // 404 with .gif indicates the emote is not animated. Try again with .png
+    if (response.status === 404 && extension === ".gif") {
+      await downloadImage(url, filePath, interaction, `.png`);
     }
 
-    const buffer = await response.buffer();
-    fs.writeFileSync(filePath, buffer);
+    if (response.ok) {
+      const buffer = await response.buffer();
+      fs.writeFileSync(emotePath, buffer);
 
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply(url);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply(`${url}${extension}`);
+      }
     }
   } catch (error) {
     console.error("Error downloading image:", error);
@@ -161,7 +158,10 @@ export async function execute(
   interaction: ChatInputCommandInteraction
 ): Promise<void> {
   let emote: string | null = interaction.options.getString("emotename");
-  emote = emote?.toLowerCase() ?? emote;
+
+  if (!emote) return;
+
+  emote = emote?.toLowerCase();
   const emotesFolder = path.join(
     fileURLToPath(import.meta.url),
     "../../..",
@@ -174,6 +174,7 @@ export async function execute(
     fs.mkdirSync(emotesFolder, { recursive: true });
   }
 
+  // Set up variables for the gql query.
   const variables = {
     query: emote,
     page: 1,
@@ -188,9 +189,11 @@ export async function execute(
     let foundFile: boolean = false;
     const possibleExtensions = [".gif", ".png"];
 
+    // Try both file extensions for emotes.
     for (const ext of possibleExtensions) {
       const emotePath = path.join(emotesFolder, `${emote}${ext}`);
 
+      // If a match is found, return the image from local files.
       if (fs.existsSync(emotePath)) {
         const attachment = new AttachmentBuilder(emotePath);
         if (!replySent) {
@@ -202,6 +205,7 @@ export async function execute(
       }
     }
 
+    // If no match was found, download it from 7tv.
     if (!foundFile) {
       const responseData = await graphQLClient.request<GraphQLResponse>(
         query,
@@ -211,18 +215,21 @@ export async function execute(
       const items = responseData.emotes.items;
 
       if (items.length > 0) {
-        const firstItem = items[0];
-        const url = firstItem.host.url;
-        const files = firstItem.host.files;
+        const match = items[0];
+        const url = match.host.url;
+        const files = match.host.files;
 
         if (files && files.length > 0) {
+          // Grab the last file in the list, as it'll be the largest resolution.
           const filename = files[files.length - 1].name
             .toString()
             .split(".")[0];
-          const link = `https:${url}/${filename}.gif`;
-          const filePath = path.join(emotesFolder, `${emote}.gif`);
 
-          await downloadImage(link, filePath, interaction);
+          // Start with .gif as we first assume its animated. If not it'll fallback to .png.
+          const link = `https:${url}/${filename}`;
+          const filePath = path.join(emotesFolder, emote);
+
+          await downloadImage(link, filePath, interaction, `.gif`);
           replySent = true;
         } else {
           if (!replySent) {
