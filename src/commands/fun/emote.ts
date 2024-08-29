@@ -161,6 +161,11 @@ export async function execute(
 
   if (!emote) return;
 
+  // Defer the reply immediately
+  if (!interaction.deferred) {
+    await interaction.deferReply();
+  }
+
   emote = emote?.toLowerCase();
   const emotesFolder = path.join(
     fileURLToPath(import.meta.url),
