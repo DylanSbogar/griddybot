@@ -18,6 +18,6 @@ public class Griddybot {
                 )
         );
         JDA api = builder.build();
-        api.addEventListener(new TestListener());
+        api.addEventListener(new MessageListener());
     }
 }

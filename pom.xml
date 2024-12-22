@@ -19,14 +19,12 @@
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
             <version>5.2.1</version>
-            <!-- Optionally disable audio natives to reduce jar size by excluding `opus-java`
             <exclusions>
                 <exclusion>
                     <groupId>club.minnced</groupId>
                     <artifactId>opus-java</artifactId>
                 </exclusion>
             </exclusions>
-            -->
         </dependency>
     </dependencies>
 </project>
