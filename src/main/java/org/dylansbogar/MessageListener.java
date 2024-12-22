@@ -12,6 +12,8 @@ public class MessageListener extends ListenerAdapter {
     private static final String ozbargain = "https://www.ozbargain.com.au/node/";
 
     Pattern thanksPattern = Pattern.compile("thanks man", Pattern.CASE_INSENSITIVE);
+    Pattern lovePattern = Pattern.compile("^i love (.*)", Pattern.CASE_INSENSITIVE);
+
     @Override
     public void onMessageReceived(MessageReceivedEvent event)
     {
@@ -23,6 +25,7 @@ public class MessageListener extends ListenerAdapter {
         MessageChannel channel = event.getChannel();
 
         Matcher thanks = thanksPattern.matcher(content);
+        Matcher love = lovePattern.matcher(content);
 
         if (content.startsWith(ozbargain)) {
             channel.sendMessage("Thanks just bought").queue();
@@ -30,6 +33,13 @@ public class MessageListener extends ListenerAdapter {
             channel.sendMessage(content).queue();
         } else if (thanks.find()) {
             channel.sendMessage("No worries <3").queue();
+        } else if (love.find()) {
+            String lovedThing = love.group(1);
+            if (lovedThing.length() > 1950) {
+                channel.sendMessage("yikes, I don't love all that").queue();
+            } else {
+                channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
+            }
         }
     }
 }
