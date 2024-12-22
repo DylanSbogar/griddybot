@@ -20,6 +20,8 @@ public class Griddybot {
                 )
         );
         JDA api = builder.build();
+
+        // Each command class is defined here.
         api.addEventListener(
                 new MessageListener(),
                 new CoinflipCommand(),
@@ -30,6 +32,7 @@ public class Griddybot {
                 new UndoDaylistCommand(),
                 new YenCommand());
 
+        // The text-content of each slash command, which shows to the user upon typing.
         api.updateCommands().addCommands(
                 Commands.slash("coinflip", "Flip a coin!"),
                 Commands.slash("daylist", "Add your current daylist and track your moods."),

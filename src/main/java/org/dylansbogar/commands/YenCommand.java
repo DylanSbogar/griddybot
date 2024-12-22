@@ -2,9 +2,11 @@ package org.dylansbogar.commands;
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.apache.commons.io.IOUtils;
+import org.json.JSONObject;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -32,7 +34,12 @@ public class YenCommand extends ListenerAdapter {
 
                 // Send the request and receive the response
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-                event.getHook().sendMessage(response.body()).queue();
+                JSONObject responseBody = new JSONObject(response.body());
+
+                BigDecimal conversionRate = responseBody.getBigDecimal("conversion_rate").setScale(2, RoundingMode.UP);
+                Long lastUpdated = responseBody.getLong("time_last_update_unix");
+
+                event.getHook().sendMessage(String.format("The current conversion rate of 1 AUD to JPY is: %s, as of xyz", conversionRate.toString())).queue();
             } catch (InterruptedException | IOException e) {
                 throw new RuntimeException(e);
             }

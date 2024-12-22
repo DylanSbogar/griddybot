@@ -10,9 +10,8 @@ import java.util.regex.Pattern;
 
 public class MessageListener extends ListenerAdapter {
     private static final String ozbargain = "https://www.ozbargain.com.au/node/";
-
-    Pattern thanksPattern = Pattern.compile("thanks man", Pattern.CASE_INSENSITIVE);
-    Pattern lovePattern = Pattern.compile("^i love (.*)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern thanksPattern = Pattern.compile("thanks man", Pattern.CASE_INSENSITIVE);
+    private static final Pattern lovePattern = Pattern.compile("^i love (.*)", Pattern.CASE_INSENSITIVE);
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event)
@@ -35,7 +34,7 @@ public class MessageListener extends ListenerAdapter {
             channel.sendMessage("No worries <3").queue();
         } else if (love.find()) {
             String lovedThing = love.group(1);
-            if (lovedThing.length() > 1950) {
+            if (lovedThing.length() > 1950) { // To ensure we don't surpass Discords maximum message length.
                 channel.sendMessage("yikes, I don't love all that").queue();
             } else {
                 channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
