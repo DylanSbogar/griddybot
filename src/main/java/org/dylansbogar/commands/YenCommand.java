@@ -19,7 +19,8 @@ import java.time.format.FormatStyle;
 
 public class YenCommand extends ListenerAdapter {
     private static final String EXCHANGE_RATE_API_KEY = System.getenv("EXCHANGE_RATE_API_KEY");
-    private static final String url = String.format("https://v6.exchangerate-api.com/v6/%s/pair/AUD/JPY", EXCHANGE_RATE_API_KEY);
+    private static final String url =
+            String.format("https://v6.exchangerate-api.com/v6/%s/pair/AUD/JPY", EXCHANGE_RATE_API_KEY);
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
@@ -40,7 +41,8 @@ public class YenCommand extends ListenerAdapter {
                 JSONObject responseBody = new JSONObject(response.body());
 
                 // Grab the conversion rate and round up to 2 decimal places.
-                BigDecimal conversionRate = responseBody.getBigDecimal("conversion_rate").setScale(2, RoundingMode.UP);
+                BigDecimal conversionRate = responseBody.
+                        getBigDecimal("conversion_rate").setScale(2, RoundingMode.UP);
 
                 // Grab the lastUpdated and convert it to local time zone.
                 long lastUpdated = responseBody.getLong("time_last_update_unix");
@@ -48,7 +50,8 @@ public class YenCommand extends ListenerAdapter {
                 ZonedDateTime localDateTime = instant.atZone(ZoneId.systemDefault());
                 DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL);
 
-                event.getHook().sendMessage(String.format("The current conversion rate of 1 AUD to JPY is: ¥%s, as of %s", conversionRate,
+                event.getHook().sendMessage(
+                        String.format("The current conversion rate of 1 AUD to JPY is: ¥%s, as of %s", conversionRate,
                         localDateTime.format(formatter))).queue();
             } catch (InterruptedException | IOException e) {
                 event.getHook().sendMessage("There was an error whilst fetching the current exchange rate.").queue();
