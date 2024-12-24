@@ -28,7 +28,6 @@ public class Griddybot {
                 new CoinflipCommand(),
                 new DaylistCommand(),
                 new EmoteCommand(),
-                new ItemShopCommand(),
                 new MinecraftCommand(),
                 new UndoDaylistCommand(),
                 new YenCommand());
@@ -38,7 +37,6 @@ public class Griddybot {
                 Commands.slash("coinflip", "Flip a coin!"),
                 Commands.slash("daylist", "Add your current daylist and track your moods."),
                 Commands.slash("emote", "Retrieve your favourite 7TV emotes."),
-                Commands.slash("itemshop", "Retrieve the status of a costmetic from the Fortnite Item Shop."),
                 Commands.slash("minecraft", "Get the status of any Minecraft server.")
                         .addOption(OptionType.STRING, "server", "The URL of the server."),
                 Commands.slash("undodaylist", "Undo your most recent daylist."),
