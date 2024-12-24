@@ -2,6 +2,7 @@ package org.dylansbogar;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.dylansbogar.commands.*;
@@ -38,7 +39,8 @@ public class Griddybot {
                 Commands.slash("daylist", "Add your current daylist and track your moods."),
                 Commands.slash("emote", "Retrieve your favourite 7TV emotes."),
                 Commands.slash("itemshop", "Retrieve the status of a costmetic from the Fortnite Item Shop."),
-                Commands.slash("minecraft", "Get the status of any Minecraft server."),
+                Commands.slash("minecraft", "Get the status of any Minecraft server.")
+                        .addOption(OptionType.STRING, "server", "The URL of the server."),
                 Commands.slash("undodaylist", "Undo your most recent daylist."),
                 Commands.slash("yen", "Gets the current conversion rate of $1 AUD to JPY.")
                 ).queue();

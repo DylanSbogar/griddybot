@@ -19,7 +19,7 @@ import java.time.format.FormatStyle;
 
 public class YenCommand extends ListenerAdapter {
     private static final String EXCHANGE_RATE_API_KEY = System.getenv("EXCHANGE_RATE_API_KEY");
-    private static final String url =
+    private static final String URL =
             String.format("https://v6.exchangerate-api.com/v6/%s/pair/AUD/JPY", EXCHANGE_RATE_API_KEY);
 
     @Override
@@ -30,13 +30,13 @@ public class YenCommand extends ListenerAdapter {
             try {
                 HttpClient client = HttpClient.newHttpClient();
 
-                // Create an HttpRequest with the GET method.
+                // Create a HttpRequest with the GET method.
                 HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
+                        .uri(URI.create(URL))
                         .GET()
                         .build();
 
-                // Send the request and receive the response.
+                // Send the request, and receive its response.
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 JSONObject responseBody = new JSONObject(response.body());
 
