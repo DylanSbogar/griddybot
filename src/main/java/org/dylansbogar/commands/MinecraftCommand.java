@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.dylansbogar.models.MinecraftPlayers;
+import org.dylansbogar.utils.EmbedGenerator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -13,11 +13,12 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class MinecraftCommand extends ListenerAdapter {
-    private static final String GRIDDY_ICON_URL =
-            "https://cdn-0.skin-tracker.com/images/fnskins/icon/fortnite-get-griddy-emote.png?ezimgfmt=rs:180x180/rscb10/ngcb10/notWebP";
+    private static final EmbedGenerator embedGenerator = new EmbedGenerator();
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
@@ -27,18 +28,13 @@ public class MinecraftCommand extends ListenerAdapter {
             String SERVER = Objects.requireNonNull(event.getOption("server")).getAsString();
 
             String URL = String.format("https://api.mcsrvstat.us/2/%s", SERVER);
-            String ICON_URL = String.format("https://api.mcsrvstat.us/2/icon/%s", SERVER);
+            String ICON_URL = String.format("https://api.mcsrvstat.us/icon/%s", SERVER);
             try {
                 HttpClient client = HttpClient.newHttpClient();
 
                 // Create a HttpRequest with the GET method.
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(URL))
-                        .GET()
-                        .build();
-
-                HttpRequest iconRequest = HttpRequest.newBuilder()
-                        .uri(URI.create(ICON_URL))
                         .GET()
                         .build();
 
@@ -51,19 +47,19 @@ public class MinecraftCommand extends ListenerAdapter {
                 int online = playersObj.getInt("online");
                 JSONArray playersList = playersObj.getJSONArray("list");
 
-                // Generate the embed.
-                EmbedBuilder embedBuilder = new EmbedBuilder();
-                embedBuilder.setTitle("Minecraft Server Status");
-                embedBuilder.setAuthor("Griddybot", null, GRIDDY_ICON_URL);
-                embedBuilder.setDescription(SERVER);
-                embedBuilder.addField("Status", status, true);
-                embedBuilder.addField("Online", String.valueOf(online), true);
+                // Create all the fields.
+                List<MessageEmbed.Field> fields = new ArrayList<>();
+                fields.add(new MessageEmbed.Field("Status", status, true));
+                fields.add(new MessageEmbed.Field("Online", String.valueOf(online), true));
 
+                // Optional field to list all the online players.
                 if (online > 0) {
-                    embedBuilder.addField("Players", playersList.join(", "), true);
+                    fields.add(new MessageEmbed.Field("Players", playersList.join(", ").replace("\"", ""), true));
                 }
 
-                event.getHook().sendMessageEmbeds(embedBuilder.build()).queue();
+                // Generate the embed and send it back.
+                EmbedBuilder embed = embedGenerator.generateEmbed("Minecraft Server Status", SERVER, ICON_URL, fields);
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
             } catch (IOException | InterruptedException e) {
                 event.getHook().sendMessage("There was an error fetching the Minecraft server information.").queue();
                 throw new RuntimeException(e);
