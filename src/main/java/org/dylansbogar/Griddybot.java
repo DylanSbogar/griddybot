@@ -35,10 +35,12 @@ public class Griddybot {
         // The text-content of each slash command, which shows to the user upon typing.
         api.updateCommands().addCommands(
                 Commands.slash("coinflip", "Flip a coin!"),
-                Commands.slash("daylist", "Add your current daylist and track your moods."),
+                Commands.slash("daylist", "Add your current daylist and track your moods.")
+                        .addOption(OptionType.STRING, "daylist", "The daylist")
+                        .addOption(OptionType.ATTACHMENT, "file", "Image of the daylist."),
                 Commands.slash("emote", "Retrieve your favourite 7TV emotes."),
                 Commands.slash("minecraft", "Get the status of any Minecraft server.")
-                        .addOption(OptionType.STRING, "server", "The URL of the server."),
+                        .addOption(OptionType.STRING, "server", "The URL of the server.", true),
                 Commands.slash("undodaylist", "Undo your most recent daylist."),
                 Commands.slash("yen", "Gets the current conversion rate of $1 AUD to JPY.")
                 ).queue();
