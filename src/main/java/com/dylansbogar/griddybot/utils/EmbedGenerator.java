@@ -1,4 +1,4 @@
-package org.dylansbogar.utils;
+package com.dylansbogar.griddybot.utils;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;

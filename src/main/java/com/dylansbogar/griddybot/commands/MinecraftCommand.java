@@ -1,10 +1,10 @@
-package org.dylansbogar.commands;
+package com.dylansbogar.griddybot.commands;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.dylansbogar.utils.EmbedGenerator;
+import com.dylansbogar.griddybot.utils.EmbedGenerator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -45,7 +45,6 @@ public class MinecraftCommand extends ListenerAdapter {
                 String status = responseBody.getBoolean("online") ? ":white_check_mark:" : ":x:";
                 JSONObject playersObj = responseBody.getJSONObject("players");
                 int online = playersObj.getInt("online");
-                JSONArray playersList = playersObj.getJSONArray("list");
 
                 // Create all the fields.
                 List<MessageEmbed.Field> fields = new ArrayList<>();
@@ -54,6 +53,7 @@ public class MinecraftCommand extends ListenerAdapter {
 
                 // Optional field to list all the online players.
                 if (online > 0) {
+                    JSONArray playersList = playersObj.getJSONArray("list");
                     fields.add(new MessageEmbed.Field("Players", playersList.join(", ").replace("\"", ""), true));
                 }
 

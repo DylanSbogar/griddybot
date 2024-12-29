@@ -1,25 +1,29 @@
-package org.dylansbogar;
+package com.dylansbogar.griddybot;
 
+import com.dylansbogar.griddybot.commands.*;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import org.dylansbogar.commands.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import java.util.EnumSet;
 
-public class Griddybot {
+@Configuration
+public class BotConfig {
     private static final String BOT_TOKEN = System.getenv("BOT_TOKEN");
 
-    public static void main(String[] args) throws Exception {
-        JDABuilder builder = JDABuilder.createDefault(BOT_TOKEN,
+
+    @Bean
+    JDA jda() {
+        final JDABuilder builder = JDABuilder.createDefault(BOT_TOKEN,
                 EnumSet.of(
                         GatewayIntent.MESSAGE_CONTENT,
                         GatewayIntent.GUILD_MESSAGES,
                         GatewayIntent.DIRECT_MESSAGES
-                )
-        );
+                ));
         JDA api = builder.build();
 
         // Each command class is defined here.
@@ -43,6 +47,8 @@ public class Griddybot {
                         .addOption(OptionType.STRING, "server", "The URL of the server.", true),
                 Commands.slash("undodaylist", "Undo your most recent daylist."),
                 Commands.slash("yen", "Gets the current conversion rate of $1 AUD to JPY.")
-                ).queue();
+        ).queue();
+
+        return api;
     }
 }

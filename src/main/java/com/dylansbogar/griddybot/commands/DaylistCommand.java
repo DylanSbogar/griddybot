@@ -1,4 +1,4 @@
-package org.dylansbogar.commands;
+package com.dylansbogar.griddybot.commands;
 
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;

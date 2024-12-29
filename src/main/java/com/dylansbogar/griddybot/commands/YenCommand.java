@@ -1,4 +1,4 @@
-package org.dylansbogar.commands;
+package com.dylansbogar.griddybot.commands;
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -52,7 +52,7 @@ public class YenCommand extends ListenerAdapter {
 
                 event.getHook().sendMessage(
                         String.format("The current conversion rate of 1 AUD to JPY is: ¥%s, as of %s", conversionRate,
-                        localDateTime.format(formatter))).queue();
+                                localDateTime.format(formatter))).queue();
             } catch (InterruptedException | IOException e) {
                 event.getHook().sendMessage("There was an error whilst fetching the current exchange rate.").queue();
                 throw new RuntimeException(e);
