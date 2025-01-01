@@ -27,6 +27,8 @@ public class Daylist {
 
     private OffsetDateTime timestamp;
 
-    @OneToMany(mappedBy = "daylist", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @OneToMany(mappedBy = "daylist", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<DaylistDescription> descriptions = new ArrayList<>();
+
 }

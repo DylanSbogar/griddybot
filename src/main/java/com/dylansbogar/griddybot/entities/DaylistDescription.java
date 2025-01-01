@@ -1,10 +1,7 @@
 package com.dylansbogar.griddybot.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.UUID;
 
@@ -19,7 +16,10 @@ public class DaylistDescription {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    private String userId;
+
     @ManyToOne
+    @ToString.Exclude
     @JoinColumn(name = "daylist_id", nullable = false)
     private Daylist daylist;
 

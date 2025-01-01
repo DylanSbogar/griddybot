@@ -42,7 +42,6 @@ public class BotConfig {
                 new DaylistCommand(daylistRepo, daylistDescriptionRepo),
                 new EmoteCommand(),
                 new MinecraftCommand(),
-                new UndoDaylistCommand(),
                 new YenCommand());
 
         // The text-content of each slash command, which shows to the user upon typing.
