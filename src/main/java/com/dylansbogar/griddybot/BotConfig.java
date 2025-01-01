@@ -1,6 +1,8 @@
 package com.dylansbogar.griddybot;
 
 import com.dylansbogar.griddybot.commands.*;
+import com.dylansbogar.griddybot.repositories.DaylistDescriptionRepository;
+import com.dylansbogar.griddybot.repositories.DaylistRepository;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -15,6 +17,13 @@ import java.util.EnumSet;
 public class BotConfig {
     private static final String BOT_TOKEN = System.getenv("BOT_TOKEN");
 
+    private final DaylistRepository daylistRepo;
+    private final DaylistDescriptionRepository daylistDescriptionRepo;
+
+    public BotConfig(DaylistRepository daylistRepo, DaylistDescriptionRepository daylistDescriptionRepo) {
+        this.daylistRepo = daylistRepo;
+        this.daylistDescriptionRepo = daylistDescriptionRepo;
+    }
 
     @Bean
     JDA jda() {
@@ -30,7 +39,7 @@ public class BotConfig {
         api.addEventListener(
                 new MessageListener(),
                 new CoinflipCommand(),
-                new DaylistCommand(),
+                new DaylistCommand(daylistRepo, daylistDescriptionRepo),
                 new EmoteCommand(),
                 new MinecraftCommand(),
                 new UndoDaylistCommand(),

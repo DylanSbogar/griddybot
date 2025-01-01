@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: griddybot
+  datasource:
+    url: jdbc:postgresql://localhost:5432/griddybot_db
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
