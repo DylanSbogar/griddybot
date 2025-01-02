@@ -39,4 +39,4 @@ build/
 **.DS_Store
 
 ### Stored Emotes ###
-**/src/main/resources/emotes
+**/src/main/resources/emotes/*
