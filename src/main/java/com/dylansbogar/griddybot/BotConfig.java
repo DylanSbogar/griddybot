@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ResourceLoader;
 
 import java.util.EnumSet;
 
@@ -20,7 +21,8 @@ public class BotConfig {
     private final DaylistRepository daylistRepo;
     private final DaylistDescriptionRepository daylistDescriptionRepo;
 
-    public BotConfig(DaylistRepository daylistRepo, DaylistDescriptionRepository daylistDescriptionRepo) {
+    public BotConfig(DaylistRepository daylistRepo,
+                     DaylistDescriptionRepository daylistDescriptionRepo) {
         this.daylistRepo = daylistRepo;
         this.daylistDescriptionRepo = daylistDescriptionRepo;
     }
@@ -50,7 +52,8 @@ public class BotConfig {
                 Commands.slash("daylist", "Add your current daylist and track your moods.")
                         .addOption(OptionType.STRING, "daylist", "The daylist")
                         .addOption(OptionType.ATTACHMENT, "file", "Image of the daylist."),
-                Commands.slash("emote", "Retrieve your favourite 7TV emotes."),
+                Commands.slash("emote", "Retrieve your favourite 7TV emotes.")
+                        .addOption(OptionType.STRING, "emote", "The name of the emote.", true),
                 Commands.slash("minecraft", "Get the status of any Minecraft server.")
                         .addOption(OptionType.STRING, "server", "The URL of the server.", true),
                 Commands.slash("undodaylist", "Undo your most recent daylist."),
