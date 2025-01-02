@@ -35,4 +35,8 @@ build/
 ### Environment Variables ###
 .env
 
+### .DS_Store ###
 **.DS_Store
+
+### Stored Emotes ###
+**/src/main/resources/emotes
