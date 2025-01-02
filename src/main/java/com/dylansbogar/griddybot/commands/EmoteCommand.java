@@ -1,21 +1,28 @@
 package com.dylansbogar.griddybot.commands;
 
+import com.dylansbogar.griddybot.entities.Emote;
+import com.dylansbogar.griddybot.repositories.EmoteRepository;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import net.dv8tion.jda.api.utils.FileUpload;
-import org.json.JSONObject;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
+import org.json.JSONArray;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Optional;
 
 public class EmoteCommand extends ListenerAdapter {
+    private final EmoteRepository emoteRepo;
+
+    private static final String EMOTE_URL = "https://cdn.betterttv.net/emote/%s/3x.webp";
+
+    public EmoteCommand(EmoteRepository emoteRepo) {
+        this.emoteRepo = emoteRepo;
+    }
+
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         if (event.getName().equals("emote")) {
@@ -31,26 +38,13 @@ public class EmoteCommand extends ListenerAdapter {
 
             String emote = emoteIn.getAsString().toLowerCase();
 
-            // Loop through every file inside :classpath/emotes folder.
-            Resource emoteDirRes = new ClassPathResource("emotes");
-            try {
-                File emoteDir = emoteDirRes.getFile();
-                if (emoteDir.isDirectory()) {
-                    for (File file : emoteDir.listFiles()) {
-                        String filename = file.getName().substring(0, file.getName().lastIndexOf('.'));
-                        if (filename.equals(emote)) {
-                            event.getHook().sendMessage("").addFiles(FileUpload.fromData(file)).queue();
-                            return;
-                        }
-                    }
-                    event.getHook().sendMessage(String.format("Unable to fetch the %s emote locally.", emote)).queue();
-                    // fetchEmote(emote, event);
-                    // TODO: Use GraphQL to fetch.
-                } else {
-                    event.getHook().sendMessage("No stored emotes.").queue();
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            // Attempt to fetch the emotes id from the database.
+            Optional<Emote> storedEmote = emoteRepo.findByName(emote);
+            if (storedEmote.isEmpty()) {
+                  fetchEmote(emote, event);
+            } else {
+                  String url = String.format(EMOTE_URL, storedEmote.get().getEmoteId());
+                  event.getHook().sendMessage(url).queue();
             }
         }
     }
@@ -69,9 +63,23 @@ public class EmoteCommand extends ListenerAdapter {
 
             // Send the request, and receive its response.
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            JSONObject responseBody = new JSONObject(response.body());
-            String emoteId = responseBody.getString("id");
-            event.getHook().sendMessage(String.format("https://cdn.betterttv.net/emote/%s/3x.webp", emoteId)).queue();
+            JSONArray responseBody = new JSONArray(response.body());
+
+            // If an emote was not found, notify the user.
+            if (responseBody.isEmpty()) {
+                event.getHook().sendMessage(String.format("No emote found with the name %s", emote)).queue();
+                return;
+            }
+            String emoteId = responseBody.getJSONObject(0).getString("id");
+
+            // Save the new emote to the database.
+            Emote newEmote = Emote.builder()
+                    .emoteId(emoteId)
+                    .name(emote)
+                    .build();
+            emoteRepo.save(newEmote);
+
+            event.getHook().sendMessage(String.format(EMOTE_URL, emoteId)).queue();
         } catch (IOException | InterruptedException e) {
             event.getHook().sendMessage(String.format("There was an error fetching the %s emote", emote)).queue();
         }

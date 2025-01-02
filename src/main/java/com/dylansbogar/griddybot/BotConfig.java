@@ -3,6 +3,7 @@ package com.dylansbogar.griddybot;
 import com.dylansbogar.griddybot.commands.*;
 import com.dylansbogar.griddybot.repositories.DaylistDescriptionRepository;
 import com.dylansbogar.griddybot.repositories.DaylistRepository;
+import com.dylansbogar.griddybot.repositories.EmoteRepository;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -20,11 +21,14 @@ public class BotConfig {
 
     private final DaylistRepository daylistRepo;
     private final DaylistDescriptionRepository daylistDescriptionRepo;
+    private final EmoteRepository emoteRepo;
 
     public BotConfig(DaylistRepository daylistRepo,
-                     DaylistDescriptionRepository daylistDescriptionRepo) {
+                     DaylistDescriptionRepository daylistDescriptionRepo,
+                     EmoteRepository emoteRepo) {
         this.daylistRepo = daylistRepo;
         this.daylistDescriptionRepo = daylistDescriptionRepo;
+        this.emoteRepo = emoteRepo;
     }
 
     @Bean
@@ -42,7 +46,7 @@ public class BotConfig {
                 new MessageListener(),
                 new CoinflipCommand(),
                 new DaylistCommand(daylistRepo, daylistDescriptionRepo),
-                new EmoteCommand(),
+                new EmoteCommand(emoteRepo),
                 new MinecraftCommand(),
                 new YenCommand());
 
