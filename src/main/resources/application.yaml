@@ -2,7 +2,7 @@ spring:
   application:
     name: griddybot
   datasource:
-    url: jdbc:postgresql://localhost:5432/griddybot_db
+    url: jdbc:postgresql://localhost:5432/${DATABASE_NAME}
     username: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
   jpa:
