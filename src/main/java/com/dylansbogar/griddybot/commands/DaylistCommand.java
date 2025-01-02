@@ -92,7 +92,6 @@ public class DaylistCommand extends ListenerAdapter {
     private String handleDaylistInput(OptionMapping daylistIn, OptionMapping fileIn, SlashCommandInteractionEvent event) {
         if (fileIn != null) {
             Message.Attachment file = fileIn.getAsAttachment();
-            System.out.println(file.getUrl());
             // daylist = result of OCR;
             return null; // Assume OCR result or another logic for file handling
         } else if (daylistIn != null) {

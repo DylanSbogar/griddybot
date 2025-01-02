@@ -54,8 +54,8 @@ public class BotConfig {
         api.updateCommands().addCommands(
                 Commands.slash("coinflip", "Flip a coin!"),
                 Commands.slash("daylist", "Add your current daylist and track your moods.")
-                        .addOption(OptionType.STRING, "daylist", "The daylist")
-                        .addOption(OptionType.ATTACHMENT, "file", "Image of the daylist."),
+                        .addOption(OptionType.STRING, "daylist", "The daylist", true),
+                        // .addOption(OptionType.ATTACHMENT, "file", "Image of the daylist."),
                 Commands.slash("emote", "Retrieve your favourite 7TV emotes.")
                         .addOption(OptionType.STRING, "emote", "The name of the emote.", true),
                 Commands.slash("minecraft", "Get the status of any Minecraft server.")
