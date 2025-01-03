@@ -74,7 +74,7 @@ public class DaylistCommand extends ListenerAdapter {
             PageRequest pageReq = PageRequest.of(0, 1);
             List<Daylist> daylists = daylistRepo.findLastByUserIdOrderByTimestampDesc(event.getUser().getId(), pageReq);
             if (!daylists.isEmpty()) {
-                daylistRepo.deleteById(daylists.getFirst().getId());
+                daylistRepo.deleteById(daylists.get(0).getId());
                 event.getHook().sendMessage("Successfully deleted your last daylist.").queue();
             } else {
                 event.getHook().sendMessage("No daylist found for the user to delete.").queue();

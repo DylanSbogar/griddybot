@@ -1,5 +1,6 @@
 package com.dylansbogar.griddybot.commands;
 
+import com.dylansbogar.griddybot.utils.YenService;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.json.JSONObject;
@@ -21,6 +22,12 @@ public class YenCommand extends ListenerAdapter {
     private static final String EXCHANGE_RATE_API_KEY = System.getenv("EXCHANGE_RATE_API_KEY");
     private static final String URL =
             String.format("https://v6.exchangerate-api.com/v6/%s/pair/AUD/JPY", EXCHANGE_RATE_API_KEY);
+
+    private final YenService yenService;
+
+    public YenCommand(YenService yenService) {
+        this.yenService = yenService;
+    }
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
