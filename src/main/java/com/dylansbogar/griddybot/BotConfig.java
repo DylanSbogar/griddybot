@@ -92,7 +92,7 @@ public class BotConfig {
     @Scheduled(cron = "0 0 11 * * *")
     public void checkConversionRate() {
         if (api != null) {
-//            api.getTextChannelById(CHANNEL_ID)
+            api.getTextChannelById(CHANNEL_ID).sendMessage(yenService.fetchExchangeRate()).queue();
         }
     }
 
