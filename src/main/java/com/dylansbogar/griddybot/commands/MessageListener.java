@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 public class MessageListener extends ListenerAdapter {
     private static final String ozbargain = "https://www.ozbargain.com.au/node/";
-    private static final Pattern thanksPattern = Pattern.compile("thanks man", Pattern.CASE_INSENSITIVE);
+    private static final Pattern thanksPattern = Pattern.compile("thanks griddy", Pattern.CASE_INSENSITIVE);
     private static final Pattern lovePattern = Pattern.compile("^i love (.*)", Pattern.CASE_INSENSITIVE);
 
     @Override

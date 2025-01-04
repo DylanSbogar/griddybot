@@ -99,22 +99,24 @@ public class BotConfig {
     @Scheduled(cron = "0 0 9 * * *")
     public void checkReminders() {
         if (api != null) {
+	    System.out.println("Checking for any reminders...");
             // Grab today's date in the dd/MM/yyyy format.
             LocalDate today = LocalDate.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             String formattedDate = today.format(formatter);
+	    System.out.println("Today's date: " + formattedDate);
 
              List<Reminder> reminders = reminderRepo.findAll();
              for (Reminder rem : reminders) {
-                 if (!rem.getDate().equals(formattedDate)) return; // If the reminder is not scheduled for today
+		 if (rem.getDate().equals(formattedDate)) {
+			// Reply to the original message.
+                 	api.getTextChannelById(CHANNEL_ID)
+                     		.retrieveMessageById(rem.getMessageId()).queue(msg ->
+                                 	msg.reply(String.format("<@%s> %s", rem.getUserId(), rem.getMessage())).queue());
 
-                 // Reply to the original message.
-                 api.getTextChannelById(CHANNEL_ID)
-                     .retrieveMessageById(rem.getMessageId()).queue(msg ->
-                                 msg.reply(String.format("<@%s> %s", rem.getUserId(), rem.getMessage())).queue());
-
-                 // Delete the reminder once it's been sent out.
-                 reminderRepo.deleteById(rem.getId());
+                 	// Delete the reminder once it's been sent out.
+                 	reminderRepo.deleteById(rem.getId());
+		 }
             }
         }
     }
