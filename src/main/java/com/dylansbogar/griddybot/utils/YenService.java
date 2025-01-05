@@ -2,10 +2,25 @@ package com.dylansbogar.griddybot.utils;
 
 import com.dylansbogar.griddybot.entities.ExchangeRate;
 import com.dylansbogar.griddybot.repositories.ExchangeRateRepository;
+import net.dv8tion.jda.api.utils.FileUpload;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtils;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.DateAxis;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.data.time.Day;
+import org.jfree.data.time.TimeSeries;
+import org.jfree.data.time.TimeSeriesCollection;
 import org.json.JSONObject;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -13,6 +28,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -101,5 +118,59 @@ public class YenService {
         LocalDate date = LocalDate.parse(dateString, formatter);
         DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy");
         return date.format(outputFormatter);
+    }
+
+    public FileUpload generateChartImage(int days) {
+        PageRequest pageRequest = PageRequest.of(0, days);
+        List<ExchangeRate> rates = exchangeRateRepo.findAllOrderByTimestampAsc(pageRequest);
+
+        TimeSeries series = new TimeSeries("Conversion Rate");
+        for (ExchangeRate rate : rates) {
+            int day = Integer.parseInt(rate.getId().substring(0, 2));
+            int month = Integer.parseInt(rate.getId().substring(3, 5));
+            int year = Integer.parseInt(rate.getId().substring(6));
+            // Extract day, month and year from rate.getDate();
+            series.add(new Day(day, month, year), rate.getRate());
+        }
+        TimeSeriesCollection dataset = new TimeSeriesCollection();
+        dataset.addSeries(series);
+
+        // Build the chart.
+        JFreeChart chart = ChartFactory.createTimeSeriesChart("Conversion Rate (AUD to JPY)",
+                "Date", "Rate", dataset, false, false, false);
+        chart.setBackgroundPaint(Color.decode("#303338"));
+        chart.getTitle().setPaint(Color.WHITE);
+
+        XYPlot plot = chart.getXYPlot();
+        plot.setBackgroundPaint(Color.decode("#2E3035"));
+
+        ValueAxis xAxis = plot.getDomainAxis();
+        xAxis.setLabelPaint(Color.WHITE);
+        xAxis.setTickLabelPaint(Color.WHITE);
+
+        // Override the date formatting on the x-axis.
+        DateAxis dateAxis = (DateAxis) xAxis;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yy");
+        dateAxis.setDateFormatOverride(dateFormat);
+
+        ValueAxis yAxis = plot.getRangeAxis();
+        yAxis.setLabelPaint(Color.WHITE);
+        yAxis.setTickLabelPaint(Color.WHITE);
+
+        try {
+            File tempFile = File.createTempFile("chart", ".png");
+            tempFile.deleteOnExit();
+
+            // Write the chart out to tempFile.
+            try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+                ChartUtils.writeChartAsPNG(output, chart, 800, 600);
+                try (FileOutputStream fileOutput = new FileOutputStream(tempFile)) {
+                    fileOutput.write(output.toByteArray());
+                }
+            }
+            return FileUpload.fromData(tempFile, "chart.png");
+        } catch (IOException e) {
+            return null;
+        }
     }
 }

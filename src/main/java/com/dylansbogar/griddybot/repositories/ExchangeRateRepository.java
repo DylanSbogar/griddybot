@@ -12,4 +12,7 @@ import java.util.List;
 public interface ExchangeRateRepository extends JpaRepository<ExchangeRate, String> {
     @Query("SELECT e FROM ExchangeRate e ORDER BY e.dateUnix DESC")
     List<ExchangeRate> findAllOrderByTimestamp(Pageable pageable);
+
+    @Query("SELECT e FROM ExchangeRate e ORDER BY e.dateUnix ASC")
+    List<ExchangeRate> findAllOrderByTimestampAsc(Pageable pageable);
 }
