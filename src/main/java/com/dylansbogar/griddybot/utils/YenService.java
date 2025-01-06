@@ -6,9 +6,7 @@ import net.dv8tion.jda.api.utils.FileUpload;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.DateAxis;
-import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.axis.*;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
@@ -150,12 +148,16 @@ public class YenService {
 
         // Override the date formatting on the x-axis.
         DateAxis dateAxis = (DateAxis) xAxis;
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yy");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM");
         dateAxis.setDateFormatOverride(dateFormat);
+        dateAxis.setTickUnit(new DateTickUnit(DateTickUnitType.DAY, 1));
 
         ValueAxis yAxis = plot.getRangeAxis();
         yAxis.setLabelPaint(Color.WHITE);
         yAxis.setTickLabelPaint(Color.WHITE);
+
+        NumberAxis numberYAxis = (NumberAxis) yAxis;
+        numberYAxis.setTickUnit(new NumberTickUnit(0.05));
 
         try {
             File tempFile = File.createTempFile("chart", ".png");
