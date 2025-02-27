@@ -98,14 +98,14 @@ public class YenService {
 
     private String buildMessage(ExchangeRate today, ExchangeRate yesterday) {
         String todayDate = convertToFormattedDate(today.getId());
-        String message = String.format("The current conversion rate of 1 AUD to USD is: %s, as of %s",
+        String message = String.format("The current conversion rate of 1 AUD to USD is: $%s, as of %s",
                 today.getRate(), todayDate);
 
         // Add previous comparison, only if one exists.
         if (yesterday != null) {
             int diff = today.getRate().compareTo(yesterday.getRate());
             String emotes = diff > 0 ? ":chart: :chart:" : ":sob: :sob:";
-            message += String.format("\nPrevious conversion rate: %s %s", yesterday.getRate(), emotes);
+            message += String.format("\nPrevious conversion rate: $%s %s", yesterday.getRate(), emotes);
         }
 
         return message;
