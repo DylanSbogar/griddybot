@@ -80,7 +80,7 @@ public class BotConfig {
                 Commands.slash("minecraft", "Get the status of any Minecraft server.")
                         .addOption(OptionType.STRING, "server", "The URL of the server.", true),
                 Commands.slash("undodaylist", "Undo your most recent daylist."),
-                Commands.slash("yen", "Gets the current conversion rate of $1 AUD to JPY."),
+                Commands.slash("exchangerate", "Gets the current conversion rate of $1 AUD to USD."),
                 Commands.slash("remindme", "Sets a reminder for a specific date.")
                         .addOption(OptionType.STRING, "date", "The date you wish to be reminded, in dd/mm/yyyy format.", true)
                         .addOption(OptionType.STRING, "message", "The message you wish to remind yourself.", true)
@@ -93,8 +93,7 @@ public class BotConfig {
     public void checkConversionRate() {
         if (api != null) {
             api.getTextChannelById(CHANNEL_ID)
-                    .sendMessage(yenService.fetchExchangeRate())
-                    .addFiles(yenService.generateChartImage(14)).queue();
+                    .sendMessage(yenService.fetchExchangeRate()).queue();
         }
     }
 

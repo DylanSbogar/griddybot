@@ -36,7 +36,7 @@ import java.util.List;
 public class YenService {
     private static final String EXCHANGE_RATE_API_KEY = System.getenv("EXCHANGE_RATE_API_KEY");
     private static final String URL =
-            String.format("https://v6.exchangerate-api.com/v6/%s/pair/AUD/JPY", EXCHANGE_RATE_API_KEY);
+            String.format("https://v6.exchangerate-api.com/v6/%s/pair/AUD/USD", EXCHANGE_RATE_API_KEY);
 
     private final ExchangeRateRepository exchangeRateRepo;
 
@@ -98,14 +98,14 @@ public class YenService {
 
     private String buildMessage(ExchangeRate today, ExchangeRate yesterday) {
         String todayDate = convertToFormattedDate(today.getId());
-        String message = String.format("The current conversion rate of 1 AUD to JPY is: ¥%s, as of %s",
+        String message = String.format("The current conversion rate of 1 AUD to USD is: %s, as of %s",
                 today.getRate(), todayDate);
 
         // Add previous comparison, only if one exists.
         if (yesterday != null) {
             int diff = today.getRate().compareTo(yesterday.getRate());
             String emotes = diff > 0 ? ":chart: :chart:" : ":sob: :sob:";
-            message += String.format("\nPrevious conversion rate: ¥%s %s", yesterday.getRate(), emotes);
+            message += String.format("\nPrevious conversion rate: %s %s", yesterday.getRate(), emotes);
         }
 
         return message;
@@ -134,7 +134,7 @@ public class YenService {
         dataset.addSeries(series);
 
         // Build the chart.
-        JFreeChart chart = ChartFactory.createTimeSeriesChart("Conversion Rate (AUD to JPY)",
+        JFreeChart chart = ChartFactory.createTimeSeriesChart("Conversion Rate (AUD to USD)",
                 "Date", "Rate", dataset, false, false, false);
         chart.setBackgroundPaint(Color.decode("#303338"));
         chart.getTitle().setPaint(Color.WHITE);

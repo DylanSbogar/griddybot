@@ -40,10 +40,9 @@ public class YenCommand extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        if (event.getName().equals("yen")) {
+        if (event.getName().equals("exchangerate")) {
             event.deferReply().queue(); // Defer the reply whilst we fetch the current exchange rate.
-            event.getHook().sendMessage(yenService.fetchExchangeRate())
-                    .addFiles(yenService.generateChartImage(14)).queue();
+            event.getHook().sendMessage(yenService.fetchExchangeRate()).queue();
         }
     }
 }
