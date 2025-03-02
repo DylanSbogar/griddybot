@@ -89,13 +89,13 @@ public class BotConfig {
         return api;
     }
 
-    @Scheduled(cron = "0 0 11 * * *")
-    public void checkConversionRate() {
-        if (api != null) {
-            api.getTextChannelById(CHANNEL_ID)
-                    .sendMessage(yenService.fetchExchangeRate()).queue();
-        }
-    }
+    //@Scheduled(cron = "0 0 11 * * *")
+    //public void checkConversionRate() {
+    //    if (api != null) {
+    //        api.getTextChannelById(CHANNEL_ID)
+    //                .sendMessage(yenService.fetchExchangeRate()).queue();
+    //    }
+    //}
 
     @Scheduled(cron = "0 0 9 * * *")
     public void checkReminders() {
