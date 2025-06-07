@@ -20,7 +20,7 @@ import java.util.Map;
 
 @Service
 public class OzbargainService {
-    private static final String URL = "https://www.ozbargain.com.au/deals/popular/feed?days=7&noexpired=1&page=0";
+    private static final String URL = "https://www.ozbargain.com.au/deals/feed";
 
     private final Map<String, Deal> dealsMap = new HashMap<>();
 
