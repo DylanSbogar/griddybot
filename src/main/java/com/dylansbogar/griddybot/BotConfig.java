@@ -6,7 +6,10 @@ import com.dylansbogar.griddybot.repositories.DaylistDescriptionRepository;
 import com.dylansbogar.griddybot.repositories.DaylistRepository;
 import com.dylansbogar.griddybot.repositories.EmoteRepository;
 import com.dylansbogar.griddybot.repositories.ReminderRepository;
+import com.dylansbogar.griddybot.utils.OzbargainService;
 import com.dylansbogar.griddybot.utils.YenService;
+import com.dylansbogar.griddybot.utils.ozbargain.Deal;
+import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Message;
@@ -19,12 +22,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
+
+import static com.dylansbogar.griddybot.utils.OzbargainService.UPVOTES_PER_MINUTE;
 
 @Configuration
+@RequiredArgsConstructor
 public class BotConfig {
     private static final String BOT_TOKEN = System.getenv("BOT_TOKEN");
     private static final String CHANNEL_ID = System.getenv("CHANNEL_ID");
@@ -34,20 +43,9 @@ public class BotConfig {
     private final EmoteRepository emoteRepo;
     private final YenService yenService;
     private final ReminderRepository reminderRepo;
+    private final OzbargainService ozbargainService;
 
     private JDA api;
-
-    public BotConfig(DaylistRepository daylistRepo,
-                     DaylistDescriptionRepository daylistDescriptionRepo,
-                     EmoteRepository emoteRepo,
-                     YenService yenService,
-                     ReminderRepository reminderRepo) {
-        this.daylistRepo = daylistRepo;
-        this.daylistDescriptionRepo = daylistDescriptionRepo;
-        this.emoteRepo = emoteRepo;
-        this.yenService = yenService;
-        this.reminderRepo = reminderRepo;
-    }
 
     @Bean
     JDA jda() {
@@ -119,6 +117,20 @@ public class BotConfig {
                  	// Delete the reminder once it's been sent out.
                  	reminderRepo.deleteById(rem.getId());
 		 }
+            }
+        }
+    }
+
+    @Scheduled(cron = "* */5 * * * * ")
+    public void checkOzb() {
+        if (api != null) {
+            Map<String, Deal> newDealsMap = ozbargainService.fetchDeals();
+            for (Deal deal : newDealsMap.values()) {
+                long minsSinceDealPosted = Duration.between(deal.getPubDate(), ZonedDateTime.now()).toMinutes();
+                if (deal.getVotesPos() / minsSinceDealPosted  > UPVOTES_PER_MINUTE) {
+                    api.getTextChannelById(CHANNEL_ID)
+                            .sendMessage("Hot bargain alert: %s\n%s".formatted(deal.getTitle(), deal.getDealUrl())).queue();
+                }
             }
         }
     }
