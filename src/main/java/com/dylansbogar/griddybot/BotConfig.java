@@ -87,15 +87,6 @@ public class BotConfig {
         return api;
     }
 
-    @Scheduled(cron = "0 0 11 * * *")
-    public void checkConversionRate() {
-        if (api != null) {
-            api.getTextChannelById(CHANNEL_ID)
-                    .sendMessage(yenService.fetchExchangeRate())
-                    .addFiles(yenService.generateChartImage(14)).queue();
-        }
-    }
-
     @Scheduled(cron = "0 0 9 * * *")
     public void checkReminders() {
         if (api != null) {
