@@ -12,12 +12,9 @@ import com.dylansbogar.griddybot.utils.ozbargain.Deal;
 import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import net.dv8tion.jda.api.requests.RestAction;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -30,13 +27,14 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
-import static com.dylansbogar.griddybot.utils.OzbargainService.UPVOTES_PER_MINUTE;
-
 @Configuration
 @RequiredArgsConstructor
 public class BotConfig {
     private static final String BOT_TOKEN = System.getenv("BOT_TOKEN");
     private static final String CHANNEL_ID = System.getenv("CHANNEL_ID");
+    private static final int MIN_UPVOTES = Integer.parseInt(System.getenv("MIN_UPVOTES"));
+    private static final double MIN_UPVOTES_PER_MINUTE = Double.parseDouble(System.getenv("MIN_UPVOTES_PER_MINUTE"));
+
 
     private final DaylistRepository daylistRepo;
     private final DaylistDescriptionRepository daylistDescriptionRepo;
@@ -126,8 +124,8 @@ public class BotConfig {
         if (api != null) {
             Map<String, Deal> newDealsMap = ozbargainService.fetchDeals();
             for (Deal deal : newDealsMap.values()) {
-                long minsSinceDealPosted = Duration.between(deal.getPubDate(), ZonedDateTime.now()).toMinutes();
-                if ((double) deal.getVotesPos() /  (double) minsSinceDealPosted  > UPVOTES_PER_MINUTE) {
+                double minsSinceDealPosted = Duration.between(deal.getPubDate(), ZonedDateTime.now()).toMinutes();
+                if (((double) deal.getVotesPos() /  minsSinceDealPosted  > MIN_UPVOTES_PER_MINUTE) && deal.getVotesPos() >= MIN_UPVOTES) {
                     api.getTextChannelById(CHANNEL_ID)
                             .sendMessage(String.format(":rotating_light: **Hot Bargain Alert** :rotating_light: \n%s\n%s", deal.getTitle(), deal.getDealUrl())).queue();
 
