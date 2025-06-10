@@ -52,7 +52,7 @@ public class MinecraftCommand extends ListenerAdapter {
                 fields.add(new MessageEmbed.Field("Online", String.valueOf(online), true));
 
                 // Optional field to list all the online players.
-                if (online > 0) {
+                if (online > 0 && playersObj.has("list")) {
                     JSONArray playersList = playersObj.getJSONArray("list");
                     fields.add(new MessageEmbed.Field("Players", playersList.join(", ").replace("\"", ""), true));
                 }

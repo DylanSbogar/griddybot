@@ -1,6 +1,5 @@
 package com.dylansbogar.griddybot.utils;
 
-import com.dylansbogar.griddybot.entities.ExchangeRate;
 import com.dylansbogar.griddybot.utils.ozbargain.Deal;
 import com.dylansbogar.griddybot.utils.ozbargain.Item;
 import com.dylansbogar.griddybot.utils.ozbargain.RssFeed;
@@ -12,7 +11,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -21,8 +19,6 @@ import java.util.Map;
 @Service
 public class OzbargainService {
     private static final String URL = "https://www.ozbargain.com.au/deals/feed";
-
-    private final Map<String, Deal> dealsMap = new HashMap<>();
 
     public Map<String, Deal> fetchDeals() {
         try {
@@ -44,28 +40,6 @@ public class OzbargainService {
             return Map.of();
         }
     }
-
-    // bruh i overthank this hard
-//    private String processDeals() {
-//        Map<String, Deal> newDealsMap = fetchDeals();
-//        for (Map.Entry<String, Deal> dealEntry : newDealsMap.entrySet()) {
-//            // If we cache deals... else this could have been just a list lmao
-////            String id = dealEntry.getKey();
-//            Deal deal = dealEntry.getValue();
-////
-////            Deal existingDeal = dealsMap.putIfAbsent(id, deal);
-////            if (existingDeal != null) {
-////
-////            }
-//
-//            long minsSinceDealPosted = Duration.between(deal.getPubDate(), ZonedDateTime.now()).toMinutes();
-//        if (deal.getVotesPos() / minsSinceDealPosted  > UPVOTES_PER_MINUTE) {
-//
-//        }
-//
-//
-//        }
-//    }
 
     public static Map<String, Deal> parseOzBargainFeed(String xmlString) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss Z", java.util.Locale.ENGLISH);

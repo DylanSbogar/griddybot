@@ -119,7 +119,7 @@ public class BotConfig {
         }
     }
 
-    @Scheduled(cron = "* */5 * * * *")
+    @Scheduled(cron = "0 */5 * * * *")
     public void checkOzb() {
         if (api != null) {
             Map<String, Deal> newDealsMap = ozbargainService.fetchDeals();
@@ -128,7 +128,6 @@ public class BotConfig {
                 if (((double) deal.getVotesPos() /  minsSinceDealPosted  > MIN_UPVOTES_PER_MINUTE) && deal.getVotesPos() >= MIN_UPVOTES) {
                     api.getTextChannelById(CHANNEL_ID)
                             .sendMessage(String.format(":rotating_light: **Hot Bargain Alert** :rotating_light: \n%s\n%s", deal.getTitle(), deal.getDealUrl())).queue();
-
                 }
             }
         }
