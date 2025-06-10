@@ -32,8 +32,8 @@ import java.util.Map;
 public class BotConfig {
     private static final String BOT_TOKEN = System.getenv("BOT_TOKEN");
     private static final String CHANNEL_ID = System.getenv("CHANNEL_ID");
-    private static final int MIN_UPVOTES = Integer.parseInt(System.getenv("MIN_UPVOTES"));
-    private static final double MIN_UPVOTES_PER_MINUTE = Double.parseDouble(System.getenv("MIN_UPVOTES_PER_MINUTE"));
+    private static final int MIN_UPVOTES = 5;
+    private static final double MIN_UPVOTES_PER_MINUTE = 1.0;
 
 
     private final DaylistRepository daylistRepo;
