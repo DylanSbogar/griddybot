@@ -24,7 +24,7 @@ public class OzbargainService {
 
     private final Map<String, Deal> dealsMap = new HashMap<>();
 
-    public static final double UPVOTES_PER_MINUTE = 0.5;
+    public static final double UPVOTES_PER_MINUTE = 1.25;
 
     public Map<String, Deal> fetchDeals() {
         try {
