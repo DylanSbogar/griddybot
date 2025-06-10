@@ -127,7 +127,7 @@ public class BotConfig {
                 double minsSinceDealPosted = Duration.between(deal.getPubDate(), ZonedDateTime.now()).toMinutes();
                 if (((double) deal.getVotesPos() /  minsSinceDealPosted  > MIN_UPVOTES_PER_MINUTE) && deal.getVotesPos() >= MIN_UPVOTES) {
                     api.getTextChannelById(CHANNEL_ID)
-                            .sendMessage(String.format(":rotating_light: **Hot Bargain Alert** :rotating_light: \n%s\n%s", deal.getTitle(), deal.getDealUrl())).queue();
+                            .sendMessageEmbeds(ozbargainService.buildOzBargainEmbed(deal).build()).queue();
                 }
             }
         }
