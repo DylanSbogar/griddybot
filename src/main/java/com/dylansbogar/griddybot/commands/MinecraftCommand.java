@@ -1,10 +1,10 @@
 package com.dylansbogar.griddybot.commands;
 
+import com.dylansbogar.griddybot.utils.EmbedGenerator;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import com.dylansbogar.griddybot.utils.EmbedGenerator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
