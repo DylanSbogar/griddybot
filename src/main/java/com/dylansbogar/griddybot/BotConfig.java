@@ -70,7 +70,7 @@ public class BotConfig {
                 Commands.slash("coinflip", "Flip a coin!"),
                 Commands.slash("daylist", "Add your current daylist and track your moods.")
                         .addOption(OptionType.STRING, "daylist", "The daylist", true),
-                        // .addOption(OptionType.ATTACHMENT, "file", "Image of the daylist."),
+                // .addOption(OptionType.ATTACHMENT, "file", "Image of the daylist."),
                 Commands.slash("emote", "Retrieve your favourite 7TV emotes.")
                         .addOption(OptionType.STRING, "emote", "The name of the emote.", true),
                 Commands.slash("minecraft", "Get the status of any Minecraft server.")
@@ -85,36 +85,38 @@ public class BotConfig {
         return api;
     }
 
-    /** @Scheduled(cron = "0 0 11 * * *")
-    public void checkConversionRate() {
-        if (api != null) {
-            api.getTextChannelById(CHANNEL_ID)
-                    .sendMessage(yenService.fetchExchangeRate())
-                    .addFiles(yenService.generateChartImage(14)).queue();
-        }
-    } **/
+    /**
+     * @Scheduled(cron = "0 0 11 * * *")
+     * public void checkConversionRate() {
+     * if (api != null) {
+     * api.getTextChannelById(CHANNEL_ID)
+     * .sendMessage(yenService.fetchExchangeRate())
+     * .addFiles(yenService.generateChartImage(14)).queue();
+     * }
+     * }
+     **/
 
     @Scheduled(cron = "0 0 9 * * *")
     public void checkReminders() {
         if (api != null) {
-	    System.out.println("Checking for any reminders...");
+            System.out.println("Checking for any reminders...");
             // Grab today's date in the dd/MM/yyyy format.
             LocalDate today = LocalDate.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             String formattedDate = today.format(formatter);
-	    System.out.println("Today's date: " + formattedDate);
+            System.out.println("Today's date: " + formattedDate);
 
-             List<Reminder> reminders = reminderRepo.findAll();
-             for (Reminder rem : reminders) {
-		 if (rem.getDate().equals(formattedDate)) {
-			// Reply to the original message.
-                 	api.getTextChannelById(CHANNEL_ID)
-                     		.retrieveMessageById(rem.getMessageId()).queue(msg ->
-                                 	msg.reply(String.format("<@%s> %s", rem.getUserId(), rem.getMessage())).queue());
+            List<Reminder> reminders = reminderRepo.findAll();
+            for (Reminder rem : reminders) {
+                if (rem.getDate().equals(formattedDate)) {
+                    // Reply to the original message.
+                    api.getTextChannelById(CHANNEL_ID)
+                            .retrieveMessageById(rem.getMessageId()).queue(msg ->
+                                    msg.reply(String.format("<@%s> %s", rem.getUserId(), rem.getMessage())).queue());
 
-                 	// Delete the reminder once it's been sent out.
-                 	reminderRepo.deleteById(rem.getId());
-		 }
+                    // Delete the reminder once it's been sent out.
+                    reminderRepo.deleteById(rem.getId());
+                }
             }
         }
     }
@@ -125,9 +127,11 @@ public class BotConfig {
             Map<String, Deal> newDealsMap = ozbargainService.fetchDeals();
             for (Deal deal : newDealsMap.values()) {
                 double minsSinceDealPosted = Duration.between(deal.getPubDate(), ZonedDateTime.now()).toMinutes();
-                if (((double) deal.getVotesPos() /  minsSinceDealPosted  > MIN_UPVOTES_PER_MINUTE) && deal.getVotesPos() >= MIN_UPVOTES) {
-                    api.getTextChannelById(CHANNEL_ID)
-                            .sendMessageEmbeds(ozbargainService.buildOzBargainEmbed(deal).build()).queue();
+                if (((double) deal.getVotesPos() / minsSinceDealPosted > MIN_UPVOTES_PER_MINUTE) && deal.getVotesPos() >= MIN_UPVOTES) {
+                    if (ozbargainService.canPostDeal(deal)) {
+                        api.getTextChannelById(CHANNEL_ID)
+                                .sendMessageEmbeds(ozbargainService.buildOzBargainEmbed(deal).build()).queue();
+                    }
                 }
             }
         }

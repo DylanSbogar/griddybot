@@ -1,9 +1,12 @@
 package com.dylansbogar.griddybot.utils;
 
+import com.dylansbogar.griddybot.entities.PostedDeal;
+import com.dylansbogar.griddybot.repositories.DealHistoryRepository;
 import com.dylansbogar.griddybot.utils.ozbargain.Deal;
 import com.dylansbogar.griddybot.utils.ozbargain.Item;
 import com.dylansbogar.griddybot.utils.ozbargain.RssFeed;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import org.springframework.stereotype.Service;
@@ -21,8 +24,10 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class OzbargainService {
     private static final EmbedGenerator embedGenerator = new EmbedGenerator();
+    private final DealHistoryRepository dealHistoryRepository;
     private static final String URL = "https://www.ozbargain.com.au/deals/feed";
 
     public Map<String, Deal> fetchDeals() {
@@ -96,5 +101,13 @@ public class OzbargainService {
 
 
         return embedGenerator.generateEmbed(":rotating_light: Hot Bargain Alert :rotating_light:", deal.getTitle(), deal.getImageUrl(), fields);
+    }
+
+    public boolean canPostDeal(Deal deal) {
+        if (dealHistoryRepository.findByUrl(deal.getDealUrl()).isPresent()) {
+            return false;
+        }
+        dealHistoryRepository.save(new PostedDeal(deal.getDealUrl()));
+        return true;
     }
 }

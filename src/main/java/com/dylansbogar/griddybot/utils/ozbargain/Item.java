@@ -3,8 +3,6 @@ package com.dylansbogar.griddybot.utils.ozbargain;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
-import java.time.LocalDateTime;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Item {
     public String title;
