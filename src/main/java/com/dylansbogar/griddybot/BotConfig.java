@@ -128,7 +128,7 @@ public class BotConfig {
             for (Deal deal : newDealsMap.values()) {
                 double minsSinceDealPosted = Duration.between(deal.getPubDate(), ZonedDateTime.now()).toMinutes();
                 if (((double) deal.getVotesPos() / minsSinceDealPosted > MIN_UPVOTES_PER_MINUTE) && deal.getVotesPos() >= MIN_UPVOTES) {
-                    if (!ozbargainService.canPostDeal(deal)) {
+                    if (ozbargainService.canPostDeal(deal)) {
                         api.getTextChannelById(CHANNEL_ID)
                                 .sendMessageEmbeds(ozbargainService.buildOzBargainEmbed(deal).build()).queue();
                     }
