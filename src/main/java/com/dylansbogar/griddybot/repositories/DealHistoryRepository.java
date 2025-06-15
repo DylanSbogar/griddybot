@@ -7,7 +7,4 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface DealHistoryRepository extends JpaRepository<PostedDeal, String> {
-
-    Optional<PostedDeal> findByUrl(String url);
-}
+public interface DealHistoryRepository extends JpaRepository<PostedDeal, String> {}

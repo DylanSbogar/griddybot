@@ -99,15 +99,14 @@ public class OzbargainService {
         fields.add(new MessageEmbed.Field("Comments", String.valueOf(deal.getCommentCount()), true));
         fields.add(new MessageEmbed.Field("Link", deal.getLink(), false));
 
-
         return embedGenerator.generateEmbed(":rotating_light: Hot Bargain Alert :rotating_light:", deal.getTitle(), deal.getImageUrl(), fields);
     }
 
     public boolean canPostDeal(Deal deal) {
-        if (dealHistoryRepository.findByUrl(deal.getDealUrl()).isPresent()) {
+        if (dealHistoryRepository.existsById(deal.getId())) {
             return false;
         }
-        dealHistoryRepository.save(new PostedDeal(deal.getDealUrl()));
+        dealHistoryRepository.save(new PostedDeal(deal.getId()));
         return true;
     }
 }

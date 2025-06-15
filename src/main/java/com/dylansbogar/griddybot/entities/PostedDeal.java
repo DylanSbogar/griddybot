@@ -3,14 +3,16 @@ package com.dylansbogar.griddybot.entities;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity
-@Table(name = "dealHistory")
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "deal_history")
 public class PostedDeal {
-
     @Id
-    private final String url;
-
+    private String id;
 }
