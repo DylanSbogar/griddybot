@@ -6,6 +6,7 @@ import com.dylansbogar.griddybot.repositories.DaylistDescriptionRepository;
 import com.dylansbogar.griddybot.repositories.DaylistRepository;
 import com.dylansbogar.griddybot.repositories.EmoteRepository;
 import com.dylansbogar.griddybot.repositories.ReminderRepository;
+import com.dylansbogar.griddybot.utils.GeminiService;
 import com.dylansbogar.griddybot.utils.OzbargainService;
 import com.dylansbogar.griddybot.utils.YenService;
 import com.dylansbogar.griddybot.utils.ozbargain.Deal;
@@ -35,13 +36,13 @@ public class BotConfig {
     private static final int MIN_UPVOTES = 5;
     private static final double MIN_UPVOTES_PER_MINUTE = 1.0;
 
-
     private final DaylistRepository daylistRepo;
     private final DaylistDescriptionRepository daylistDescriptionRepo;
     private final EmoteRepository emoteRepo;
     private final YenService yenService;
     private final ReminderRepository reminderRepo;
     private final OzbargainService ozbargainService;
+    private final GeminiService geminiService;
 
     private JDA api;
 
@@ -57,11 +58,10 @@ public class BotConfig {
 
         // Each command class is defined here.
         api.addEventListener(
-                new MessageListener(),
+                new MessageListener(geminiService),
                 new CoinflipCommand(),
                 new DaylistCommand(daylistRepo, daylistDescriptionRepo),
                 new EmoteCommand(emoteRepo),
-                new GeminiCommand(),
                 new MinecraftCommand(),
                 new YenCommand(yenService),
                 new RemindMeCommand(reminderRepo));
@@ -85,17 +85,6 @@ public class BotConfig {
 
         return api;
     }
-
-    /**
-     * @Scheduled(cron = "0 0 11 * * *")
-     * public void checkConversionRate() {
-     * if (api != null) {
-     * api.getTextChannelById(CHANNEL_ID)
-     * .sendMessage(yenService.fetchExchangeRate())
-     * .addFiles(yenService.generateChartImage(14)).queue();
-     * }
-     * }
-     **/
 
     @Scheduled(cron = "0 0 9 * * *")
     public void checkReminders() {

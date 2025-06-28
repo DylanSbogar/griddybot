@@ -1,6 +1,8 @@
 package com.dylansbogar.griddybot.commands;
 
+import com.dylansbogar.griddybot.utils.GeminiService;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.SelfUser;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -13,18 +15,25 @@ public class MessageListener extends ListenerAdapter {
     private static final Pattern thanksPattern = Pattern.compile("thanks griddy", Pattern.CASE_INSENSITIVE);
     private static final Pattern lovePattern = Pattern.compile("^i love (.*)", Pattern.CASE_INSENSITIVE);
 
+    private final GeminiService geminiService;
+    public MessageListener(GeminiService geminiService) { this.geminiService = geminiService; }
+
     @Override
     public void onMessageReceived(MessageReceivedEvent event)
     {
         // Ensure griddybot does not respond to itself.
         if (event.getAuthor().isBot()) return;
 
+        SelfUser griddyBot = event.getJDA().getSelfUser();
         Message message = event.getMessage();
         String content = message.getContentRaw();
         MessageChannel channel = event.getChannel();
 
         Matcher thanks = thanksPattern.matcher(content);
         Matcher love = lovePattern.matcher(content);
+
+        Pattern promptPattern = Pattern.compile("<@!?" + griddyBot.getId() + ">\\s*(.*)");
+        Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
 
         if (content.startsWith(ozbargain)) {
             channel.sendMessage("Thanks just bought").queue();
@@ -39,6 +48,8 @@ public class MessageListener extends ListenerAdapter {
             } else {
                 channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
             }
+        } else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
+            channel.sendMessage(geminiService.askGemini(promptMatcher.group(1))).queue();
         }
     }
 }
