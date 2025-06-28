@@ -49,7 +49,8 @@ public class MessageListener extends ListenerAdapter {
                 channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
             }
         } else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
-            channel.sendMessage(geminiService.askGemini(promptMatcher.group(1))).queue();
+            channel.retrieveMessageById(message.getId()).queue(msg ->
+                    msg.reply(geminiService.askGemini(promptMatcher.group(1))).queue());
         }
     }
 }

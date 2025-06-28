@@ -12,7 +12,7 @@ public class GeminiService {
     private static final String MODEL_ID = "gemini-2.5-flash";
 
     public String askGemini(String prompt) {
-        prompt += ". Please keep your response under 2000 characters.";
+        prompt += " (Please keep your response under 2000 characters)";
         try (Client client = Client.builder()
                 .apiKey(System.getenv("GOOGLE_API_KEY"))
                 .httpOptions(HttpOptions.builder().apiVersion("v1").build())
@@ -25,6 +25,8 @@ public class GeminiService {
             }
 
             return response.text();
+        } catch (Exception e) {
+            return "Seems I made a fucky wucky, please try again later.";
         }
     }
 }
