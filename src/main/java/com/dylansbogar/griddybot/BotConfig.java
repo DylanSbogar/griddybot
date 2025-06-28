@@ -61,6 +61,7 @@ public class BotConfig {
                 new CoinflipCommand(),
                 new DaylistCommand(daylistRepo, daylistDescriptionRepo),
                 new EmoteCommand(emoteRepo),
+                new GeminiCommand(),
                 new MinecraftCommand(),
                 new YenCommand(yenService),
                 new RemindMeCommand(reminderRepo));
