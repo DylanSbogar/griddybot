@@ -55,12 +55,17 @@ public class MessageListener extends ListenerAdapter {
                     throw new RuntimeException(e);
                 }
 
-                if (dealHistoryRepository.existsById(dealId)) {
-                    channel.sendMessage(":rotating_light: Repost detected :rotating_light:").setEmbeds(embed).queue();
-                } else {
+                if (!dealHistoryRepository.existsById(dealId)) {
                     dealHistoryRepository.save(new PostedDeal(dealId));
-                    channel.sendMessage("Thanks just bought").setEmbeds(embed).queue();
                 }
+
+                channel.retrieveMessageById(event.getMessageId()).queue(msg ->
+                        msg.reply(
+                                dealHistoryRepository.existsById(dealId) ?
+                                        ":rotating_light: Repost detected :rotating_light:"
+                                        : "Thanks just bought")
+                                .setEmbeds(embed).queue()
+                );
             }
         } else if (content.equalsIgnoreCase("gm") || content.equalsIgnoreCase("gn")) {
             channel.sendMessage(content).queue();

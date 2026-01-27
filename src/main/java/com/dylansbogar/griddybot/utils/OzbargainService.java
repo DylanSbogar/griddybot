@@ -128,9 +128,11 @@ public class OzbargainService {
             Matcher submittedMatcher = submittedPattern.matcher(submittedText);
             String submitted = submittedMatcher.find() ? submittedMatcher.group() : "Not Found";
 
-            List<MessageEmbed.Field> fields = new ArrayList<>();
-            fields.add(new MessageEmbed.Field("Link", url, true));
-
-            return embedGenerator.generateEmbed(title, String.format("Posted on %s", submitted), "https://static.wikia.nocookie.net/fortnite/images/8/84/Get_Griddy_-_Emote_-_Fortnite.png/revision/latest?cb=20210427105200", fields);
+            return embedGenerator.generateEmbed(
+                    title,
+                    String.format("Posted on %s", submitted),
+                    "https://static.wikia.nocookie.net/fortnite/images/8/84/Get_Griddy_-_Emote_-_Fortnite.png/revision/latest?cb=20210427105200",
+                    new ArrayList<>()
+            );
     }
 }
