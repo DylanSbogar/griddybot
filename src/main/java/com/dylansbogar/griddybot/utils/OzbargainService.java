@@ -9,7 +9,9 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
+import org.jsoup.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -22,6 +24,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -108,5 +112,25 @@ public class OzbargainService {
         }
         dealHistoryRepository.save(new PostedDeal(deal.getId()));
         return true;
+    }
+
+    public EmbedBuilder parseOzBargainLink(String url) throws IOException {
+            Document document = Jsoup.connect(url)
+                    .userAgent("Mozilla/5.0")
+                    .timeout(10000)
+                    .get();
+
+            // Fetch the desired elements from the HTML.
+            String title = document.selectFirst("meta[property=og:title]").attr("content");
+
+            String submittedText = document.selectFirst("div.submitted").text();
+            Pattern submittedPattern = Pattern.compile("\\d{2}/\\d{2}/\\d{4}\\s*-\\s*\\d{2}:\\d{2}");
+            Matcher submittedMatcher = submittedPattern.matcher(submittedText);
+            String submitted = submittedMatcher.find() ? submittedMatcher.group() : "Not Found";
+
+            List<MessageEmbed.Field> fields = new ArrayList<>();
+            fields.add(new MessageEmbed.Field("Link", url, true));
+
+            return embedGenerator.generateEmbed(title, String.format("Posted on %s", submitted), "https://static.wikia.nocookie.net/fortnite/images/8/84/Get_Griddy_-_Emote_-_Fortnite.png/revision/latest?cb=20210427105200", fields);
     }
 }

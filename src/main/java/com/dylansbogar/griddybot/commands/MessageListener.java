@@ -2,22 +2,29 @@ package com.dylansbogar.griddybot.commands;
 
 import com.dylansbogar.griddybot.entities.PostedDeal;
 import com.dylansbogar.griddybot.repositories.DealHistoryRepository;
-import lombok.RequiredArgsConstructor;
+import com.dylansbogar.griddybot.utils.OzbargainService;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@RequiredArgsConstructor
 public class MessageListener extends ListenerAdapter {
     private static final String ozbargain = "https://www.ozbargain.com.au/node/";
     private static final Pattern thanksPattern = Pattern.compile("thanks griddy", Pattern.CASE_INSENSITIVE);
     private static final Pattern lovePattern = Pattern.compile("^i love (.*)", Pattern.CASE_INSENSITIVE);
 
     public final DealHistoryRepository dealHistoryRepository;
+    private final OzbargainService ozbargainService;
+
+    public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService) {
+        this.dealHistoryRepository = dealHistoryRepository;
+        this.ozbargainService = ozbargainService;
+    }
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event)
@@ -39,12 +46,19 @@ public class MessageListener extends ListenerAdapter {
 
             if (dealIdMatcher.find()) {
                 String dealId = dealIdMatcher.group(1);
+                MessageEmbed embed;
+
+                try {
+                    embed = ozbargainService.parseOzBargainLink(content).build();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
 
                 if (dealHistoryRepository.existsById(dealId)) {
-                    channel.sendMessage(":rotating_light: Repost detected :rotating_light:").queue();
+                    channel.sendMessage(":rotating_light: Repost detected :rotating_light:").setEmbeds(embed).queue();
                 } else {
                     dealHistoryRepository.save(new PostedDeal(dealId));
-                    channel.sendMessage("Thanks just bought").queue();
+                    channel.sendMessage("Thanks just bought").setEmbeds(embed).queue();
                 }
             }
         } else if (content.equalsIgnoreCase("gm") || content.equalsIgnoreCase("gn")) {

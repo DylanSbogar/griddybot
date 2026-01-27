@@ -55,7 +55,7 @@ public class BotConfig {
 
         // Each command class is defined here.
         api.addEventListener(
-                new MessageListener(dealHistoryRepo),
+                new MessageListener(dealHistoryRepo, ozbargainService),
                 new CoinflipCommand(),
                 new DaylistCommand(daylistRepo, daylistDescriptionRepo),
                 new EmoteCommand(emoteRepo),
