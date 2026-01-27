@@ -40,16 +40,17 @@ public class MessageListener extends ListenerAdapter {
         Matcher love = lovePattern.matcher(content);
 
         if (content.startsWith(ozbargain)) {
-            // Extract the id from the ozBargain URL using a regex.
-            Pattern dealIdPattern = Pattern.compile("https?://www\\.ozbargain\\.com\\.au/node/(\\d+)");
-            Matcher dealIdMatcher = dealIdPattern.matcher(content);
+            // Extract the full URL and then the id from the ozBargain URL using a regex.
+            Pattern fullUrlPattern = Pattern.compile("https?://www\\.ozbargain\\.com\\.au/node/\\d+");
+            Matcher fullUrlMatcher = fullUrlPattern.matcher(content);
 
-            if (dealIdMatcher.find()) {
-                String dealId = dealIdMatcher.group(1);
+            if (fullUrlMatcher.find()) {
+                String fullUrl = fullUrlMatcher.group();
+                String dealId = fullUrl.replaceAll("\\D+", "");
                 MessageEmbed embed;
 
                 try {
-                    embed = ozbargainService.parseOzBargainLink(content).build();
+                    embed = ozbargainService.parseOzBargainLink(fullUrl).build();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
