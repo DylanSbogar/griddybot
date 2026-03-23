@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 
 @Service
 public class OpenRouterService {
@@ -24,13 +25,27 @@ public class OpenRouterService {
         this.googleSearchService = googleSearchService;
     }
 
-    public String ask(String prompt) {
-        String fullPrompt = prompt + " (Please keep your response under 2000 characters)";
+    public String ask(ConversationHistory history) {
         try {
-            JSONArray messages = new JSONArray()
-                    .put(new JSONObject()
+            JSONArray messages = new JSONArray();
+
+            if (history.getSummary() != null && !history.getSummary().isEmpty()) {
+                messages.put(new JSONObject()
+                        .put("role", "system")
+                        .put("content", "Previous conversation context: " + history.getSummary()));
+            }
+
+            List<JSONObject> historyMessages = history.getMessages();
+            for (int i = 0; i < historyMessages.size(); i++) {
+                JSONObject msg = historyMessages.get(i);
+                if (i == historyMessages.size() - 1 && "user".equals(msg.getString("role"))) {
+                    messages.put(new JSONObject()
                             .put("role", "user")
-                            .put("content", fullPrompt));
+                            .put("content", msg.getString("content") + " (Please keep your response under 2000 characters)"));
+                } else {
+                    messages.put(msg);
+                }
+            }
 
             JSONArray tools = new JSONArray()
                     .put(new JSONObject()

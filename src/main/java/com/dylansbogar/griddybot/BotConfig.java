@@ -3,6 +3,7 @@ package com.dylansbogar.griddybot;
 import com.dylansbogar.griddybot.commands.*;
 import com.dylansbogar.griddybot.entities.Reminder;
 import com.dylansbogar.griddybot.repositories.*;
+import com.dylansbogar.griddybot.utils.ConversationService;
 import com.dylansbogar.griddybot.utils.OpenRouterService;
 import com.dylansbogar.griddybot.utils.OzbargainService;
 import com.dylansbogar.griddybot.utils.YenService;
@@ -41,6 +42,7 @@ public class BotConfig {
     private final OzbargainService ozbargainService;
     private final DealHistoryRepository dealHistoryRepo;
     private final OpenRouterService openRouterService;
+    private final ConversationService conversationService;
 
     private JDA api;
 
@@ -56,7 +58,7 @@ public class BotConfig {
 
         // Each command class is defined here.
         api.addEventListener(
-                new MessageListener(dealHistoryRepo, ozbargainService, openRouterService),
+                new MessageListener(dealHistoryRepo, ozbargainService, openRouterService, conversationService),
                 new ModelCommand(openRouterService),
                 new CoinflipCommand(),
                 new DaylistCommand(daylistRepo, daylistDescriptionRepo),

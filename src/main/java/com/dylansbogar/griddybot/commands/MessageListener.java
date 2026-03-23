@@ -2,6 +2,7 @@ package com.dylansbogar.griddybot.commands;
 
 import com.dylansbogar.griddybot.entities.PostedDeal;
 import com.dylansbogar.griddybot.repositories.DealHistoryRepository;
+import com.dylansbogar.griddybot.utils.ConversationService;
 import com.dylansbogar.griddybot.utils.OpenRouterService;
 import com.dylansbogar.griddybot.utils.OzbargainService;
 import net.dv8tion.jda.api.entities.Message;
@@ -23,11 +24,13 @@ public class MessageListener extends ListenerAdapter {
     public final DealHistoryRepository dealHistoryRepository;
     private final OzbargainService ozbargainService;
     private final OpenRouterService openRouterService;
+    private final ConversationService conversationService;
 
-    public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService, OpenRouterService openRouterService) {
+    public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService, OpenRouterService openRouterService, ConversationService conversationService) {
         this.dealHistoryRepository = dealHistoryRepository;
         this.ozbargainService = ozbargainService;
         this.openRouterService = openRouterService;
+        this.conversationService = conversationService;
     }
 
     @Override
@@ -85,8 +88,14 @@ public class MessageListener extends ListenerAdapter {
                 channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
             }
         } else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
-            channel.retrieveMessageById(message.getId()).queue(msg ->
-                    msg.reply(openRouterService.ask(promptMatcher.group(1))).queue());
+            String prompt = promptMatcher.group(1);
+            String channelId = channel.getId();
+            channel.retrieveMessageById(message.getId()).queue(msg -> {
+                conversationService.addMessage(channelId, "user", prompt);
+                String response = openRouterService.ask(conversationService.getHistory(channelId));
+                conversationService.addMessage(channelId, "assistant", response);
+                msg.reply(response).queue();
+            });
         }
     }
 }
