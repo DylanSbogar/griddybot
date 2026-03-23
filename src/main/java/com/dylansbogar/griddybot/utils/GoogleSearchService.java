@@ -14,13 +14,15 @@ import java.nio.charset.StandardCharsets;
 @Service
 public class GoogleSearchService {
     private static final String API_URL = "https://www.googleapis.com/customsearch/v1";
+    private static final String API_KEY = System.getenv("GOOGLE_API_KEY");
+    private static final String SEARCH_ENGINE_ID = System.getenv("GOOGLE_SEARCH_ENGINE_ID");
 
     public String search(String query) {
         try {
             String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
             String url = API_URL
-                    + "?key=" + System.getenv("GOOGLE_API_KEY")
-                    + "&cx=" + System.getenv("GOOGLE_SEARCH_ENGINE_ID")
+                    + "?key=" + API_KEY
+                    + "&cx=" + SEARCH_ENGINE_ID
                     + "&q=" + encodedQuery
                     + "&num=5";
 

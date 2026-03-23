@@ -12,6 +12,7 @@ import java.net.http.HttpResponse;
 @Service
 public class OpenRouterService {
     private static final String API_URL = "https://openrouter.ai/api/v1/chat/completions";
+    private static final String API_KEY = System.getenv("OPENROUTER_API_KEY");
     private String modelId = "minimax/minimax-m2.7";
 
     public String getModelId() { return modelId; }
@@ -94,7 +95,7 @@ public class OpenRouterService {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL))
-                .header("Authorization", "Bearer " + System.getenv("OPENROUTER_API_KEY"))
+                .header("Authorization", "Bearer " + API_KEY)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
                 .build();
