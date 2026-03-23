@@ -3,6 +3,7 @@ package com.dylansbogar.griddybot;
 import com.dylansbogar.griddybot.commands.*;
 import com.dylansbogar.griddybot.entities.Reminder;
 import com.dylansbogar.griddybot.repositories.*;
+import com.dylansbogar.griddybot.utils.OpenRouterService;
 import com.dylansbogar.griddybot.utils.OzbargainService;
 import com.dylansbogar.griddybot.utils.YenService;
 import com.dylansbogar.griddybot.utils.ozbargain.Deal;
@@ -32,7 +33,6 @@ public class BotConfig {
     private static final int MIN_UPVOTES = 5;
     private static final double MIN_UPVOTES_PER_MINUTE = 1.0;
 
-
     private final DaylistRepository daylistRepo;
     private final DaylistDescriptionRepository daylistDescriptionRepo;
     private final EmoteRepository emoteRepo;
@@ -40,6 +40,7 @@ public class BotConfig {
     private final ReminderRepository reminderRepo;
     private final OzbargainService ozbargainService;
     private final DealHistoryRepository dealHistoryRepo;
+    private final OpenRouterService openRouterService;
 
     private JDA api;
 
@@ -55,7 +56,7 @@ public class BotConfig {
 
         // Each command class is defined here.
         api.addEventListener(
-                new MessageListener(dealHistoryRepo, ozbargainService),
+                new MessageListener(dealHistoryRepo, ozbargainService, openRouterService),
                 new CoinflipCommand(),
                 new DaylistCommand(daylistRepo, daylistDescriptionRepo),
                 new EmoteCommand(emoteRepo),

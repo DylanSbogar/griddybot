@@ -2,9 +2,11 @@ package com.dylansbogar.griddybot.commands;
 
 import com.dylansbogar.griddybot.entities.PostedDeal;
 import com.dylansbogar.griddybot.repositories.DealHistoryRepository;
+import com.dylansbogar.griddybot.utils.OpenRouterService;
 import com.dylansbogar.griddybot.utils.OzbargainService;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.SelfUser;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -20,10 +22,12 @@ public class MessageListener extends ListenerAdapter {
 
     public final DealHistoryRepository dealHistoryRepository;
     private final OzbargainService ozbargainService;
+    private final OpenRouterService openRouterService;
 
-    public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService) {
+    public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService, OpenRouterService openRouterService) {
         this.dealHistoryRepository = dealHistoryRepository;
         this.ozbargainService = ozbargainService;
+        this.openRouterService = openRouterService;
     }
 
     @Override
@@ -32,12 +36,16 @@ public class MessageListener extends ListenerAdapter {
         // Ensure griddybot does not respond to itself.
         if (event.getAuthor().isBot()) return;
 
+        SelfUser griddyBot = event.getJDA().getSelfUser();
         Message message = event.getMessage();
         String content = message.getContentRaw();
         MessageChannel channel = event.getChannel();
 
         Matcher thanks = thanksPattern.matcher(content);
         Matcher love = lovePattern.matcher(content);
+
+        Pattern promptPattern = Pattern.compile("<@!?" + griddyBot.getId() + ">\\s*(.*)");
+        Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
 
         if (content.startsWith(ozbargain)) {
             // Extract the full URL and then the id from the ozBargain URL using a regex.
@@ -76,6 +84,9 @@ public class MessageListener extends ListenerAdapter {
             } else {
                 channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
             }
+        } else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
+            channel.retrieveMessageById(message.getId()).queue(msg ->
+                    msg.reply(openRouterService.ask(promptMatcher.group(1))).queue());
         }
     }
 }
