@@ -99,6 +99,11 @@ public class OpenRouterService {
         HttpResponse<String> response = HttpClient.newHttpClient()
                 .send(request, HttpResponse.BodyHandlers.ofString());
 
-        return new JSONObject(response.body());
+        JSONObject json = new JSONObject(response.body());
+        if (json.has("error")) {
+            String errorMsg = json.getJSONObject("error").optString("message", "unknown error");
+            throw new RuntimeException("OpenRouter error: " + errorMsg);
+        }
+        return json;
     }
 }
