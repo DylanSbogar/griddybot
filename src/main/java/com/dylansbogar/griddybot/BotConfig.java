@@ -2,11 +2,9 @@ package com.dylansbogar.griddybot;
 
 import com.dylansbogar.griddybot.commands.*;
 import com.dylansbogar.griddybot.entities.Reminder;
-import com.dylansbogar.griddybot.repositories.DaylistDescriptionRepository;
-import com.dylansbogar.griddybot.repositories.DaylistRepository;
-import com.dylansbogar.griddybot.repositories.EmoteRepository;
-import com.dylansbogar.griddybot.repositories.ReminderRepository;
-import com.dylansbogar.griddybot.utils.GeminiService;
+<<<<<<< HEAD
+import com.dylansbogar.griddybot.repositories.*;
+import com.dylansbogar.griddybot.utils.OpenRouterService;
 import com.dylansbogar.griddybot.utils.OzbargainService;
 import com.dylansbogar.griddybot.utils.YenService;
 import com.dylansbogar.griddybot.utils.ozbargain.Deal;
@@ -42,7 +40,9 @@ public class BotConfig {
     private final YenService yenService;
     private final ReminderRepository reminderRepo;
     private final OzbargainService ozbargainService;
-    private final GeminiService geminiService;
+<<<<<<< HEAD
+    private final DealHistoryRepository dealHistoryRepo;
+    private final OpenRouterService openRouterService;
 
     private JDA api;
 
@@ -58,7 +58,8 @@ public class BotConfig {
 
         // Each command class is defined here.
         api.addEventListener(
-                new MessageListener(geminiService),
+<<<<<<< HEAD
+                new MessageListener(dealHistoryRepo, ozbargainService, openRouterService),
                 new CoinflipCommand(),
                 new DaylistCommand(daylistRepo, daylistDescriptionRepo),
                 new EmoteCommand(emoteRepo),
