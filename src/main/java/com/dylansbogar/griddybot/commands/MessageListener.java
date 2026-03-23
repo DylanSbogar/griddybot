@@ -1,6 +1,6 @@
 package com.dylansbogar.griddybot.commands;
 
-import com.dylansbogar.griddybot.utils.GeminiService;
+import com.dylansbogar.griddybot.utils.OpenRouterService;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.SelfUser;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
@@ -15,8 +15,8 @@ public class MessageListener extends ListenerAdapter {
     private static final Pattern thanksPattern = Pattern.compile("thanks griddy", Pattern.CASE_INSENSITIVE);
     private static final Pattern lovePattern = Pattern.compile("^i love (.*)", Pattern.CASE_INSENSITIVE);
 
-    private final GeminiService geminiService;
-    public MessageListener(GeminiService geminiService) { this.geminiService = geminiService; }
+    private final OpenRouterService openRouterService;
+    public MessageListener(OpenRouterService openRouterService) { this.openRouterService = openRouterService; }
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event)
@@ -50,7 +50,7 @@ public class MessageListener extends ListenerAdapter {
             }
         } else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
             channel.retrieveMessageById(message.getId()).queue(msg ->
-                    msg.reply(geminiService.askGemini(promptMatcher.group(1))).queue());
+                    msg.reply(openRouterService.ask(promptMatcher.group(1))).queue());
         }
     }
 }
