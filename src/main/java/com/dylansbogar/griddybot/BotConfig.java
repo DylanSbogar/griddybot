@@ -57,6 +57,7 @@ public class BotConfig {
         // Each command class is defined here.
         api.addEventListener(
                 new MessageListener(dealHistoryRepo, ozbargainService, openRouterService),
+                new ModelCommand(openRouterService),
                 new CoinflipCommand(),
                 new DaylistCommand(daylistRepo, daylistDescriptionRepo),
                 new EmoteCommand(emoteRepo),
@@ -78,7 +79,9 @@ public class BotConfig {
                 Commands.slash("yen", "Gets the current conversion rate of $1 AUD to JPY."),
                 Commands.slash("remindme", "Sets a reminder for a specific date.")
                         .addOption(OptionType.STRING, "date", "The date you wish to be reminded, in dd/mm/yyyy format.", true)
-                        .addOption(OptionType.STRING, "message", "The message you wish to remind yourself.", true)
+                        .addOption(OptionType.STRING, "message", "The message you wish to remind yourself.", true),
+                Commands.slash("model", "Set the AI model used by the bot.")
+                        .addOption(OptionType.STRING, "model_id", "The OpenRouter model ID (e.g. minimax/minimax-m2.7).", true)
         ).queue();
 
         return api;

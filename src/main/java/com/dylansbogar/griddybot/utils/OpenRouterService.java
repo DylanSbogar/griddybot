@@ -12,7 +12,10 @@ import java.net.http.HttpResponse;
 @Service
 public class OpenRouterService {
     private static final String API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    private static final String MODEL_ID = "minimax/minimax-m2.7";
+    private String modelId = "minimax/minimax-m2.7";
+
+    public String getModelId() { return modelId; }
+    public void setModelId(String modelId) { this.modelId = modelId; }
 
     private final GoogleSearchService googleSearchService;
 
@@ -83,7 +86,7 @@ public class OpenRouterService {
 
     private JSONObject callApi(JSONArray messages, JSONArray tools) throws Exception {
         JSONObject body = new JSONObject();
-        body.put("model", MODEL_ID);
+        body.put("model", modelId);
         body.put("messages", messages);
         if (tools != null) {
             body.put("tools", tools);
