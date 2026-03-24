@@ -96,7 +96,7 @@ public class OpenRouterService {
 
             return responseMessage.getString("content");
         } catch (Exception e) {
-            return "Seems I made a fucky wucky, please try again later.";
+            return "Seems I made a fucky wucky, please try again later.\n`" + e.getMessage() + "`";
         }
     }
 
