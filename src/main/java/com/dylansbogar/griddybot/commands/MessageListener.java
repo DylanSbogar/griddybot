@@ -58,22 +58,14 @@ public class MessageListener extends ListenerAdapter {
             if (fullUrlMatcher.find()) {
                 String fullUrl = fullUrlMatcher.group();
                 String dealId = fullUrl.replaceAll("\\D+", "");
-                MessageEmbed embed;
 
-                try {
-                    embed = ozbargainService.parseOzBargainLink(fullUrl).build();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-
-                if (dealHistoryRepository.existsById(dealId)) {
-                    channel.retrieveMessageById(event.getMessageId()).queue(msg ->
-                            msg.reply(":rotating_light: Repost detected :rotating_light:").setEmbeds(embed).queue());
+ 		if (dealHistoryRepository.existsById(dealId)) {
+     			channel.retrieveMessageById(event.getMessageId()).queue(msg ->
+                            msg.reply(":rotating_light: Repost detected :rotating_light:").queue());
                 } else {
                     dealHistoryRepository.save(new PostedDeal(dealId));
                     channel.retrieveMessageById(event.getMessageId()).queue(msg ->
-                            msg.reply("Thanks just bought").setEmbeds(embed).queue());
+                            msg.reply("Thanks just bought").queue());
                 }
             }
         } else if (content.equalsIgnoreCase("gm") || content.equalsIgnoreCase("gn")) {
