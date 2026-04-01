@@ -62,6 +62,7 @@ public class BotConfig {
                 new MessageListener(dealHistoryRepo, ozbargainService, openRouterService, conversationService),
                 new ModelCommand(openRouterService),
                 new LastServerCommand(lastServerRepo),
+                new HistoryCommand(conversationService),
                 new CoinflipCommand(),
                 new DaylistCommand(daylistRepo, daylistDescriptionRepo),
                 new EmoteCommand(emoteRepo),
@@ -89,7 +90,8 @@ public class BotConfig {
                 Commands.slash("setlastserver", "Set the date and description of the last server.")
                         .addOption(OptionType.STRING, "date", "The date in DD/MM/YY format.", true)
                         .addOption(OptionType.STRING, "description", "Description of the server.", true),
-                Commands.slash("lastserver", "See how many days it's been since the last server.")
+                Commands.slash("lastserver", "See how many days it's been since the last server."),
+                Commands.slash("history", "Show the AI conversation summary for this channel.")
         ).queue();
 
         return api;
