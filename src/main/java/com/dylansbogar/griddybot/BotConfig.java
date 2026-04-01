@@ -41,6 +41,7 @@ public class BotConfig {
     private final ReminderRepository reminderRepo;
     private final OzbargainService ozbargainService;
     private final DealHistoryRepository dealHistoryRepo;
+    private final LastServerRepository lastServerRepo;
     private final OpenRouterService openRouterService;
     private final ConversationService conversationService;
 
@@ -60,6 +61,7 @@ public class BotConfig {
         api.addEventListener(
                 new MessageListener(dealHistoryRepo, ozbargainService, openRouterService, conversationService),
                 new ModelCommand(openRouterService),
+                new LastServerCommand(lastServerRepo),
                 new CoinflipCommand(),
                 new DaylistCommand(daylistRepo, daylistDescriptionRepo),
                 new EmoteCommand(emoteRepo),
@@ -83,7 +85,11 @@ public class BotConfig {
                         .addOption(OptionType.STRING, "date", "The date you wish to be reminded, in dd/mm/yyyy format.", true)
                         .addOption(OptionType.STRING, "message", "The message you wish to remind yourself.", true),
                 Commands.slash("model", "Set the AI model used by the bot.")
-                        .addOption(OptionType.STRING, "model_id", "The OpenRouter model ID (e.g. minimax/minimax-m2.7).", true)
+                        .addOption(OptionType.STRING, "model_id", "The OpenRouter model ID (e.g. minimax/minimax-m2.7).", true),
+                Commands.slash("setlastserver", "Set the date and description of the last server.")
+                        .addOption(OptionType.STRING, "date", "The date in DD/MM/YY format.", true)
+                        .addOption(OptionType.STRING, "description", "Description of the server.", true),
+                Commands.slash("lastserver", "See how many days it's been since the last server.")
         ).queue();
 
         return api;
