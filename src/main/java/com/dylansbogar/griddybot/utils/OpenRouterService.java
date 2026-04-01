@@ -88,16 +88,23 @@ public class OpenRouterService {
                 }
 
                 JSONObject finalResponse = callApi(messages, null);
-                return finalResponse.getJSONArray("choices")
+                return extractContent(finalResponse.getJSONArray("choices")
                         .getJSONObject(0)
-                        .getJSONObject("message")
-                        .getString("content");
+                        .getJSONObject("message"));
             }
 
-            return responseMessage.getString("content");
+            return extractContent(responseMessage);
         } catch (Exception e) {
             return "Seems I made a fucky wucky, please try again later.\n`" + e.getMessage() + "`";
         }
+    }
+
+    private String extractContent(JSONObject message) {
+        String content = message.optString("content", null);
+        if (content == null) {
+            throw new RuntimeException("null content in response: " + message);
+        }
+        return content;
     }
 
     private JSONObject callApi(JSONArray messages, JSONArray tools) throws Exception {
