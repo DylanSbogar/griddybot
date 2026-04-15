@@ -4,6 +4,7 @@ import com.dylansbogar.griddybot.commands.*;
 import com.dylansbogar.griddybot.entities.Reminder;
 import com.dylansbogar.griddybot.repositories.*;
 import com.dylansbogar.griddybot.utils.ConversationService;
+import com.dylansbogar.griddybot.utils.InstagramService;
 import com.dylansbogar.griddybot.utils.OpenRouterService;
 import com.dylansbogar.griddybot.utils.OzbargainService;
 import com.dylansbogar.griddybot.utils.YenService;
@@ -44,6 +45,7 @@ public class BotConfig {
     private final LastServerRepository lastServerRepo;
     private final OpenRouterService openRouterService;
     private final ConversationService conversationService;
+    private final InstagramService instagramService;
 
     private JDA api;
 
@@ -59,7 +61,7 @@ public class BotConfig {
 
         // Each command class is defined here.
         api.addEventListener(
-                new MessageListener(dealHistoryRepo, ozbargainService, openRouterService, conversationService),
+                new MessageListener(dealHistoryRepo, ozbargainService, openRouterService, conversationService, instagramService),
                 new ModelCommand(openRouterService),
                 new LastServerCommand(lastServerRepo),
                 new HistoryCommand(conversationService),
