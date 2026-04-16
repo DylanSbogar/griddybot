@@ -3,6 +3,7 @@ package com.dylansbogar.griddybot.commands;
 import com.dylansbogar.griddybot.entities.PostedDeal;
 import com.dylansbogar.griddybot.repositories.DealHistoryRepository;
 import com.dylansbogar.griddybot.utils.ConversationService;
+import com.dylansbogar.griddybot.utils.InstagramService;
 import com.dylansbogar.griddybot.utils.OpenRouterService;
 import com.dylansbogar.griddybot.utils.OzbargainService;
 import net.dv8tion.jda.api.entities.Message;
@@ -20,17 +21,23 @@ public class MessageListener extends ListenerAdapter {
     private static final String ozbargain = "https://www.ozbargain.com.au/node/";
     private static final Pattern thanksPattern = Pattern.compile("thanks griddy", Pattern.CASE_INSENSITIVE);
     private static final Pattern lovePattern = Pattern.compile("^i love (.*)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern instagramReelPattern = Pattern.compile(
+            "https?://(?:www\\.)?instagram\\.com/reel/[A-Za-z0-9_-]+/?(?:\\?[^\\s]*)?",
+            Pattern.CASE_INSENSITIVE
+    );
 
     public final DealHistoryRepository dealHistoryRepository;
     private final OzbargainService ozbargainService;
     private final OpenRouterService openRouterService;
     private final ConversationService conversationService;
+    private final InstagramService instagramService;
 
-    public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService, OpenRouterService openRouterService, ConversationService conversationService) {
+    public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService, OpenRouterService openRouterService, ConversationService conversationService, InstagramService instagramService) {
         this.dealHistoryRepository = dealHistoryRepository;
         this.ozbargainService = ozbargainService;
         this.openRouterService = openRouterService;
         this.conversationService = conversationService;
+        this.instagramService = instagramService;
     }
 
     @Override
@@ -46,11 +53,22 @@ public class MessageListener extends ListenerAdapter {
 
         Matcher thanks = thanksPattern.matcher(content);
         Matcher love = lovePattern.matcher(content);
+        Matcher instagramMatcher = instagramReelPattern.matcher(content);
 
         Pattern promptPattern = Pattern.compile("<@!?" + griddyBot.getId() + ">\\s*(.*)");
         Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
 
-        if (content.startsWith(ozbargain)) {
+        if (instagramMatcher.find()) {
+            String instagramUrl = instagramMatcher.group();
+            channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
+                String mediaUrl = instagramService.getMediaUrl(instagramUrl);
+                if (mediaUrl != null) {
+                    msg.reply(mediaUrl).queue();
+                } else {
+                    msg.reply("Couldn't retrieve media for that reel, sorry!").queue();
+                }
+            });
+        } else if (content.startsWith(ozbargain)) {
             // Extract the full URL and then the id from the ozBargain URL using a regex.
             Pattern fullUrlPattern = Pattern.compile("https?://www\\.ozbargain\\.com\\.au/node/\\d+");
             Matcher fullUrlMatcher = fullUrlPattern.matcher(content);
