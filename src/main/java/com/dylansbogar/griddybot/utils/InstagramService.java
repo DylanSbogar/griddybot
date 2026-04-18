@@ -17,7 +17,7 @@ public class InstagramService {
      */
     public String getMediaUrl(String instagramUrl) {
         try {
-            Process process = new ProcessBuilder("yt-dlp", "--get-url", instagramUrl)
+            Process process = new ProcessBuilder("yt-dlp","-f", "b", "--get-url", instagramUrl)
                     .redirectErrorStream(true)
                     .start();
 
