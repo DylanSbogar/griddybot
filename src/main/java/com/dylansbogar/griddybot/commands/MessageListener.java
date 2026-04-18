@@ -63,8 +63,7 @@ public class MessageListener extends ListenerAdapter {
             channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
                 File filePath = instagramService.downloadMedia(instagramUrl);
                 if (filePath != null) {
-                    msg.replyFiles(FileUpload.fromData(filePath)).queue();
-                    filePath.delete();
+                    msg.replyFiles(FileUpload.fromData(filePath)).queue(sentMsg_ -> filePath.delete());
                 } else {
                     msg.reply("Couldn't retrieve media for that reel, sorry!").queue();
                 }
