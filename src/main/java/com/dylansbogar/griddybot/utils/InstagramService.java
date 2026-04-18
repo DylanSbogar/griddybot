@@ -3,39 +3,44 @@ package com.dylansbogar.griddybot.utils;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.util.List;
 
 @Service
 public class InstagramService {
 
     /**
-     * Resolves an Instagram reel URL to a direct media URL using yt-dlp --get-url.
-     * No download occurs — yt-dlp just prints the CDN URL and exits.
+     * Downloads instagram reel using yt-dlp and provides the file object for the downloaded video
      *
      * @param instagramUrl the original Instagram reel URL
-     * @return a direct media URL, or null if yt-dlp failed
+     * @return the file object for the downloaded video
      */
-    public String getMediaUrl(String instagramUrl) {
+    public File downloadMedia(String instagramUrl) {
         try {
-            Process process = new ProcessBuilder("yt-dlp", "--get-url", instagramUrl)
+            Process process = new ProcessBuilder("yt-dlp", "-f bv+ba", "--no-progress", instagramUrl)
                     .redirectErrorStream(true)
                     .start();
+
+            int exitCode = process.waitFor();
 
             String output;
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 output = reader.lines()
-                        .filter(line -> line.startsWith("http"))
+                        .filter(line -> line.startsWith("[Merger] Merging formats into"))
                         .findFirst()
                         .orElse(null);
             }
 
-            int exitCode = process.waitFor();
             if (exitCode != 0 || output == null) {
                 System.err.println("yt-dlp exited with code " + exitCode + " for URL: " + instagramUrl);
                 return null;
             }
 
-            return String.format("[Here's your reel!](%s)", output);
+            output = output.replace("[Merger] Merging formats into ", "").replace("\"", "");
+
+            return new File(output);
 
         } catch (Exception e) {
             System.err.println("Failed to run yt-dlp: " + e.getMessage());

@@ -7,13 +7,13 @@ import com.dylansbogar.griddybot.utils.InstagramService;
 import com.dylansbogar.griddybot.utils.OpenRouterService;
 import com.dylansbogar.griddybot.utils.OzbargainService;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.SelfUser;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.utils.FileUpload;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,12 +61,13 @@ public class MessageListener extends ListenerAdapter {
         if (instagramMatcher.find()) {
             String instagramUrl = instagramMatcher.group();
             channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
-                String mediaUrl = instagramService.getMediaUrl(instagramUrl);
-                if (mediaUrl != null) {
-                    msg.reply(mediaUrl).queue();
+                File filePath = instagramService.downloadMedia(instagramUrl);
+                if (filePath != null) {
+                    msg.replyFiles(FileUpload.fromData(filePath)).queue();
                 } else {
                     msg.reply("Couldn't retrieve media for that reel, sorry!").queue();
                 }
+                filePath.delete();
             });
         } else if (content.startsWith(ozbargain)) {
             // Extract the full URL and then the id from the ozBargain URL using a regex.
