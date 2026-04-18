@@ -64,10 +64,10 @@ public class MessageListener extends ListenerAdapter {
                 File filePath = instagramService.downloadMedia(instagramUrl);
                 if (filePath != null) {
                     msg.replyFiles(FileUpload.fromData(filePath)).queue();
+                    filePath.delete();
                 } else {
                     msg.reply("Couldn't retrieve media for that reel, sorry!").queue();
                 }
-                filePath.delete();
             });
         } else if (content.startsWith(ozbargain)) {
             // Extract the full URL and then the id from the ozBargain URL using a regex.
