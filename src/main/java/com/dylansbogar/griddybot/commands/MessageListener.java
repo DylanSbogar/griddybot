@@ -49,6 +49,12 @@ public class MessageListener extends ListenerAdapter {
         SelfUser griddyBot = event.getJDA().getSelfUser();
         Message message = event.getMessage();
         String content = message.getContentRaw();
+        // Clean content to ignore URLs, emojis, and mentions
+        String cleaned = content
+                .replaceAll("https?://\\S+", "")
+                .replaceAll("<a?:\\w+:\\d+>", "")
+                .replaceAll("<@!?\\d+>|<@&\\d+>", "")
+                .trim();
         MessageChannel channel = event.getChannel();
 
         Matcher thanks = thanksPattern.matcher(content);
@@ -97,9 +103,9 @@ public class MessageListener extends ListenerAdapter {
             } else {
                 channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
             }
-        } else if(content.matches(".*(6|six)(.|\\w+)(7|seven).*")) {
+        } else if(cleaned.matches(".*\\b(6|six)\\b.*\\b(7|seven)\\b.*")) {
             channel.sendMessage("https://tenor.com/view/bosnov-67-bosnov-67-67-meme-gif-16727368109953357722").queue();
-        } else if(content.matches(".*(7|seven)(.|\\w+)(6|six).*")) {
+        } else if(cleaned.matches(".*\\b(7|seven)\\b.*\\b(6|six)\\b.*")) {
             channel.sendMessage("https://tenor.com/view/staring-press-close-staredown-train-gif-22975756").queue();
         } else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
             String prompt = promptMatcher.group(1);
