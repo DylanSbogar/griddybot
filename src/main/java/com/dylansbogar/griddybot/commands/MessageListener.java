@@ -97,11 +97,11 @@ public class MessageListener extends ListenerAdapter {
             } else {
                 channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
             }
-        } else if(content.matches(".*6.*7.*")) {
+        } else if(content.matches(".*(6|six)(.|\\w+)(7|seven).*")) {
             channel.sendMessage("https://tenor.com/view/bosnov-67-bosnov-67-67-meme-gif-16727368109953357722").queue();
-        }
-
-        else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
+        } else if(content.matches(".*(7|seven)(.|\\w+)(6|six).*")) {
+            channel.sendMessage("https://tenor.com/view/staring-press-close-staredown-train-gif-22975756").queue();
+        } else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
             String prompt = promptMatcher.group(1);
             String channelId = channel.getId();
             channel.retrieveMessageById(message.getId()).queue(msg -> {
