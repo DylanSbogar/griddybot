@@ -14,7 +14,7 @@ import java.util.List;
 public class OpenRouterService {
     private static final String API_URL = "https://openrouter.ai/api/v1/chat/completions";
     private static final String API_KEY = System.getenv("OPENROUTER_API_KEY");
-    private String modelId = "minimax/minimax-m2.7";
+    private String modelId = "@preset/brodeys-cringe";
 
     public String getModelId() { return modelId; }
     public void setModelId(String modelId) { this.modelId = modelId; }
