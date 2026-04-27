@@ -6,14 +6,14 @@ import com.dylansbogar.griddybot.utils.ConversationService;
 import com.dylansbogar.griddybot.utils.InstagramService;
 import com.dylansbogar.griddybot.utils.OpenRouterService;
 import com.dylansbogar.griddybot.utils.OzbargainService;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.SelfUser;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,6 +25,7 @@ public class MessageListener extends ListenerAdapter {
             "https?://(?:www\\.)?instagram\\.com/reel/[A-Za-z0-9_-]+/?(?:\\?[^\\s]*)?",
             Pattern.CASE_INSENSITIVE
     );
+    private static final List<UserSnowflake> bullyList = List.of(User.fromId("187817424337240064"));
 
     public final DealHistoryRepository dealHistoryRepository;
     private final OzbargainService ozbargainService;
@@ -65,6 +66,11 @@ public class MessageListener extends ListenerAdapter {
         Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
 
         if (instagramMatcher.find()) {
+            if(bullyList.contains(event.getAuthor())) {
+                channel.sendMessage("Owops, sowwy, I dont hewp buwwies >:( . Undew you want to add me to hades-homosexuaws? :duc:").queue();
+                return;
+            }
+
             String instagramUrl = instagramMatcher.group();
             channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
                 String mediaUrl = instagramService.getMediaUrl(instagramUrl);
@@ -93,21 +99,41 @@ public class MessageListener extends ListenerAdapter {
                 }
             }
         } else if (content.equalsIgnoreCase("gm") || content.equalsIgnoreCase("gn")) {
+            if(bullyList.contains(event.getAuthor())) {
+                if(content.equalsIgnoreCase("gm")) {
+                    channel.sendMessage("Bad morning >:(").queue();
+                } else {
+                    channel.sendMessage("Bad night >:(").queue();
+                }
+                return;
+            }
             channel.sendMessage(content).queue();
         } else if (thanks.find()) {
-            channel.sendMessage("No worries <3").queue();
-        } else if (love.find()) {
-            String lovedThing = love.group(1);
-            if (lovedThing.length() > 1950) { // To ensure we don't surpass Discords maximum message length.
-                channel.sendMessage("yikes, I don't love all that").queue();
+            if(bullyList.contains(event.getAuthor())) {
+                channel.sendMessage("...").queue();
             } else {
-                channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
+                channel.sendMessage("No worries <3").queue();
+            }
+        } else if (love.find()) {
+            if(bullyList.contains(event.getAuthor())) {
+                channel.sendMessage("yikes, I dont love anything you do >:(").queue();
+            } else {
+                String lovedThing = love.group(1);
+                if (lovedThing.length() > 1950) { // To ensure we don't surpass Discords maximum message length.
+                    channel.sendMessage("yikes, I don't love all that").queue();
+                } else {
+                    channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
+                }
             }
         } else if(cleaned.matches(".*\\b(6|six)\\b.*\\b(7|seven)\\b.*")) {
             channel.sendMessage("https://tenor.com/view/bosnov-67-bosnov-67-67-meme-gif-16727368109953357722").queue();
         } else if(cleaned.matches(".*\\b(7|seven)\\b.*\\b(6|six)\\b.*")) {
             channel.sendMessage("https://tenor.com/view/staring-press-close-staredown-train-gif-22975756").queue();
         } else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
+            if(bullyList.contains(event.getAuthor())) {
+                channel.sendMessage("Owops, sowwy, I dont hewp buwwies >:( . Undew you want to add me to hades-homosexuaws? :duc:").queue();
+                return;
+            }
             String prompt = promptMatcher.group(1);
             String channelId = channel.getId();
             channel.retrieveMessageById(message.getId()).queue(msg -> {
