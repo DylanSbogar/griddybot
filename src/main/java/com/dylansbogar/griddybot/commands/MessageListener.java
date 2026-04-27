@@ -25,7 +25,7 @@ public class MessageListener extends ListenerAdapter {
             "https?://(?:www\\.)?instagram\\.com/reel/[A-Za-z0-9_-]+/?(?:\\?[^\\s]*)?",
             Pattern.CASE_INSENSITIVE
     );
-    private static final List<UserSnowflake> bullyList = List.of(User.fromId("187817424337240064"));
+    private static final List<UserSnowflake> bullyList = List.of(User.fromId("187817424337240064"), User.fromId("1265821669985878208"));
 
     public final DealHistoryRepository dealHistoryRepository;
     private final OzbargainService ozbargainService;
