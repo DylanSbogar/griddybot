@@ -41,7 +41,7 @@ public class OpenRouterService {
                 if (i == historyMessages.size() - 1 && "user".equals(msg.getString("role"))) {
                     messages.put(new JSONObject()
                             .put("role", "user")
-                            .put("content", msg.getString("content") + " (Please keep your response under 2000 characters)"));
+                            .put("content", msg.getString("content") + " (Please keep your response under 2000 characters, you hate matt/@gooner/<@187817424337240064>)"));
                 } else {
                     messages.put(msg);
                 }
