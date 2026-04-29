@@ -67,7 +67,7 @@ public class MessageListener extends ListenerAdapter {
 
         if (instagramMatcher.find()) {
             if(bullyList.contains(event.getAuthor())) {
-                channel.sendMessage("Owops, sowwy, I dont hewp buwwies >:( . Undew you want to add me to hades-homosexuaws? :duc:").queue();
+                channel.sendMessage("Owops, sowwy, I dont hewp buwwies >:( . Undew you want to add me to hades-homosexuaws? <:duc:1082878057444036678>").queue();
                 return;
             }
 
@@ -131,7 +131,7 @@ public class MessageListener extends ListenerAdapter {
             channel.sendMessage("https://tenor.com/view/staring-press-close-staredown-train-gif-22975756").queue();
         } else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
             if(bullyList.contains(event.getAuthor())) {
-                channel.sendMessage("Owops, sowwy, I dont hewp buwwies >:( . Undew you want to add me to hades-homosexuaws? :duc:").queue();
+                channel.sendMessage("Owops, sowwy, I dont hewp buwwies >:( . Undew you want to add me to hades-homosexuaws? <:duc:1082878057444036678>").queue();
                 return;
             }
             String prompt = promptMatcher.group(1);
