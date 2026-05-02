@@ -136,8 +136,8 @@ public class BotConfig {
                 api.getTextChannelById(CHANNEL_ID).sendMessage(message).queue();
             } else {
                 int burnCount = daysSinceStart - tokenBurnCutoff;
-                String message = String.format("<@187817424337240064> day %s of demanding griddy be added to <#1237375983099711569>. Today %s tokens will be burned, this will increase everyday until the demand is met.",
-                        daysSinceStart, burnCount);
+                String message = String.format("<@187817424337240064> day %s of demanding griddy be added to <#1237375983099711569>. Today %s messages worth of tokens will be burned, this will increase everyday until the demand is met.",
+                        daysSinceStart, burnCount + 2);
                 MessageChannel channel = api.getTextChannelById(CHANNEL_ID);
                 channel.sendMessage(message).queue();
 

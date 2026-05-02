@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -41,18 +42,24 @@ public class TokenWaster {
     public static void wasteTokens(OpenRouterService openRouterService, int wasteCount, MessageChannel channel) {
         Random random = new Random();
         ConversationHistory conversationHistory = new ConversationHistory();
+        List<String> messages = new ArrayList<>();
 
         String topic = topics.get(random.nextInt(0, topics.size()));
+
+        messages.add(String.format("**%s**", topic));
         conversationHistory.getMessages().add(new JSONObject().put("role", "user").put("content", topic));
 
         for(int i = 0; i < wasteCount + 2; i++) {
-            String context = String.format("You are %s, reply to following using your personality and cadence. Limit your response to 100 characters",
-                    personalities.get(random.nextInt(0, personalities.size())));
+            String personality = personalities.get(random.nextInt(0, personalities.size()));
+            String context = String.format("You are %s, reply to following using your personality and cadence. Limit your response to 100 characters", personality);
 
             String response = openRouterService.ask(conversationHistory, context, "minimax/minimax-m2.7");
-            channel.sendMessage(response).queue();
+            String fullResponse = String.format("%s: %s", personality, response);
 
+            messages.add(fullResponse);
             conversationHistory.getMessages().add(new JSONObject().put("role", "user").put("content", response));
         }
+
+        channel.sendMessage(String.join("\n", messages)).queue();
     }
 }
