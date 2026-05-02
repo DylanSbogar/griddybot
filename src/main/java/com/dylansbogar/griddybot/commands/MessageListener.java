@@ -2,10 +2,7 @@ package com.dylansbogar.griddybot.commands;
 
 import com.dylansbogar.griddybot.entities.PostedDeal;
 import com.dylansbogar.griddybot.repositories.DealHistoryRepository;
-import com.dylansbogar.griddybot.utils.ConversationService;
-import com.dylansbogar.griddybot.utils.InstagramService;
-import com.dylansbogar.griddybot.utils.OpenRouterService;
-import com.dylansbogar.griddybot.utils.OzbargainService;
+import com.dylansbogar.griddybot.utils.*;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -33,7 +30,9 @@ public class MessageListener extends ListenerAdapter {
     private final ConversationService conversationService;
     private final InstagramService instagramService;
 
-    public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService, OpenRouterService openRouterService, ConversationService conversationService, InstagramService instagramService) {
+    public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService,
+                           OpenRouterService openRouterService, ConversationService conversationService,
+                           InstagramService instagramService) {
         this.dealHistoryRepository = dealHistoryRepository;
         this.ozbargainService = ozbargainService;
         this.openRouterService = openRouterService;
@@ -64,6 +63,10 @@ public class MessageListener extends ListenerAdapter {
 
         Pattern promptPattern = Pattern.compile("<@!?" + griddyBot.getId() + ">\\s*(.*)");
         Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
+
+        if(bullyList.contains(event.getAuthor())) {
+            ReactionService.reactToMessage(event.getMessage());
+        }
 
         if (instagramMatcher.find()) {
             if(bullyList.contains(event.getAuthor())) {
