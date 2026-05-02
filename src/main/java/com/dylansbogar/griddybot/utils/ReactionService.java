@@ -11,7 +11,7 @@ public class ReactionService {
     private static final List<List<String>> REACTION_MESSAGES = List.of(
             List.of("👀", "➡️", "🇭", "🇦", "🇩", "🇪", "🇸"),
             List.of("🆓", "🆘", "🙏", "😭"),
-            List.of("🆂", "🅴", "🅽", "🅳", "🅷", "🅴", "🅻", "🅿"),
+            List.of("🆂", "🅴", "🅽", "🅳", "🅷", "*️", "🅻", "🅿"),
             List.of("👀", "🫵", "🅼", "🅰", "🆃", "🦖", "💀", "➡️", "🌈", "🔥"),
             List.of("👆", "😒", "🆈", "🅾", "🆄", "🇲", "🇦", "🅳", "🇪", "🆃", "🅷", "ℹ️", "🆂"),
             List.of("🫵", "🤡", "🔒"),
