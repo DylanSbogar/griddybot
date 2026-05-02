@@ -29,15 +29,17 @@ public class MessageListener extends ListenerAdapter {
     private final OpenRouterService openRouterService;
     private final ConversationService conversationService;
     private final InstagramService instagramService;
+    private final ReactionService reactionService;
 
     public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService,
                            OpenRouterService openRouterService, ConversationService conversationService,
-                           InstagramService instagramService) {
+                           InstagramService instagramService, ReactionService reactionService) {
         this.dealHistoryRepository = dealHistoryRepository;
         this.ozbargainService = ozbargainService;
         this.openRouterService = openRouterService;
         this.conversationService = conversationService;
         this.instagramService = instagramService;
+        this.reactionService = reactionService;
     }
 
     @Override
@@ -65,7 +67,7 @@ public class MessageListener extends ListenerAdapter {
         Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
 
         if(bullyList.contains(event.getAuthor())) {
-            ReactionService.reactToMessage(event.getMessage());
+            reactionService.reactToMessage(event.getMessage());
         }
 
         if (instagramMatcher.find()) {
