@@ -3,15 +3,12 @@ package com.dylansbogar.griddybot;
 import com.dylansbogar.griddybot.commands.*;
 import com.dylansbogar.griddybot.entities.Reminder;
 import com.dylansbogar.griddybot.repositories.*;
-import com.dylansbogar.griddybot.utils.ConversationService;
-import com.dylansbogar.griddybot.utils.InstagramService;
-import com.dylansbogar.griddybot.utils.OpenRouterService;
-import com.dylansbogar.griddybot.utils.OzbargainService;
-import com.dylansbogar.griddybot.utils.YenService;
+import com.dylansbogar.griddybot.utils.*;
 import com.dylansbogar.griddybot.utils.ozbargain.Deal;
 import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -23,6 +20,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +32,7 @@ public class BotConfig {
     private static final String CHANNEL_ID = System.getenv("CHANNEL_ID");
     private static final int MIN_UPVOTES = 5;
     private static final double MIN_UPVOTES_PER_MINUTE = 1.0;
+    private static final LocalDate campaignStartDate = LocalDate.of(2026, 4, 26);
 
     private final DaylistRepository daylistRepo;
     private final DaylistDescriptionRepository daylistDescriptionRepo;
@@ -120,6 +119,29 @@ public class BotConfig {
                     // Delete the reminder once it's been sent out.
                     reminderRepo.deleteById(rem.getId());
                 }
+            }
+        }
+    }
+
+    @Scheduled(cron = "0 0 12 * * *")
+    public void giveCountDown() {
+        if (api != null) {
+            LocalDate today = LocalDate.now();
+            int daysSinceStart = (int) ChronoUnit.DAYS.between(campaignStartDate, today);
+            int tokenBurnCutoff = 14;
+
+            if(daysSinceStart < tokenBurnCutoff) {
+                String message = String.format("<@187817424337240064> day %s of demanding griddy be added to <#1237375983099711569>. You have %s days until tokens start getting burned.",
+                        daysSinceStart, tokenBurnCutoff);
+                api.getTextChannelById(CHANNEL_ID).sendMessage(message).queue();
+            } else {
+                int burnCount = daysSinceStart - tokenBurnCutoff;
+                String message = String.format("<@187817424337240064> day %s of demanding griddy be added to <#1237375983099711569>. Today %s messages worth of tokens will be burned, this will increase everyday until the demand is met.",
+                        daysSinceStart, burnCount + 2);
+                MessageChannel channel = api.getTextChannelById(CHANNEL_ID);
+                channel.sendMessage(message).queue();
+
+                TokenWaster.wasteTokens(openRouterService, burnCount, channel);
             }
         }
     }

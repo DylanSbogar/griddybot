@@ -16,7 +16,7 @@ public class ModelCommand extends ListenerAdapter {
         if (!event.getName().equals("model")) return;
 
         String modelId = event.getOption("model_id").getAsString();
-        openRouterService.setModelId(modelId);
+        openRouterService.setDefaultModel(modelId);
         event.reply("Model set to `" + modelId + "`").queue();
     }
 }
