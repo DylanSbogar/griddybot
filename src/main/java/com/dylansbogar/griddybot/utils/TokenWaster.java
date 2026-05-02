@@ -21,7 +21,10 @@ public class TokenWaster {
             "Donald Trump",
             "Joe Biden",
             "Asmongold",
-            "Hasan Piker"
+            "Hasan Piker",
+            "PirateSoftware",
+            "Benjamin Netanyahu",
+            "Strongly nationalist chinese man"
     );
 
     private final static List<String> topics = List.of(
