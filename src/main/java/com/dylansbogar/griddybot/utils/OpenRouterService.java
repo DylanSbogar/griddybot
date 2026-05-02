@@ -14,10 +14,11 @@ import java.util.List;
 public class OpenRouterService {
     private static final String API_URL = "https://openrouter.ai/api/v1/chat/completions";
     private static final String API_KEY = System.getenv("OPENROUTER_API_KEY");
-    private String modelId = "@preset/brodeys-cringe";
+    private String defaultModel = "@preset/brodeys-cringe";
+    private String defaultContext = "(Please keep your response under 2000 characters, you hate matt/@gooner/<@187817424337240064>)";
 
-    public String getModelId() { return modelId; }
-    public void setModelId(String modelId) { this.modelId = modelId; }
+    public String getDefaultModel() { return defaultModel; }
+    public void setDefaultModel(String defaultModel) { this.defaultModel = defaultModel; }
 
     private final GoogleSearchService googleSearchService;
 
@@ -26,6 +27,10 @@ public class OpenRouterService {
     }
 
     public String ask(ConversationHistory history) {
+        return ask(history, defaultContext, defaultModel);
+    }
+
+    public String ask(ConversationHistory history, String context, String model) {
         try {
             JSONArray messages = new JSONArray();
 
@@ -41,7 +46,7 @@ public class OpenRouterService {
                 if (i == historyMessages.size() - 1 && "user".equals(msg.getString("role"))) {
                     messages.put(new JSONObject()
                             .put("role", "user")
-                            .put("content", msg.getString("content") + " (Please keep your response under 2000 characters, you hate matt/@gooner/<@187817424337240064>)"));
+                            .put("content", msg.getString("content") + context));
                 } else {
                     messages.put(msg);
                 }
@@ -61,7 +66,7 @@ public class OpenRouterService {
                                                             .put("description", "The search query")))
                                             .put("required", new JSONArray().put("query")))));
 
-            JSONObject firstResponse = callApi(messages, tools);
+            JSONObject firstResponse = callApi(messages, tools, model);
             JSONArray choices = firstResponse.getJSONArray("choices");
             JSONObject choice = choices.getJSONObject(0);
             JSONObject responseMessage = choice.getJSONObject("message");
@@ -87,7 +92,7 @@ public class OpenRouterService {
                             .put("content", searchResults));
                 }
 
-                JSONObject finalResponse = callApi(messages, null);
+                JSONObject finalResponse = callApi(messages, null, model);
                 return extractContent(finalResponse.getJSONArray("choices")
                         .getJSONObject(0)
                         .getJSONObject("message"));
@@ -107,7 +112,7 @@ public class OpenRouterService {
         return content;
     }
 
-    private JSONObject callApi(JSONArray messages, JSONArray tools) throws Exception {
+    private JSONObject callApi(JSONArray messages, JSONArray tools, String modelId) throws Exception {
         JSONObject body = new JSONObject();
         body.put("model", modelId);
         body.put("messages", messages);
