@@ -47,7 +47,7 @@ public class ReactionService {
             Collections.shuffle(remainingMessages);
         }
 
-        List<String> chosen = remainingMessages.removeFirst();
+        List<String> chosen = remainingMessages.remove(0);
         applyReactions(message, chosen);
     }
 
