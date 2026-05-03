@@ -2,12 +2,14 @@ package com.dylansbogar.griddybot.utils;
 
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+@Service
 public class ReactionService {
 
     private static final List<List<String>> REACTION_MESSAGES = List.of(
