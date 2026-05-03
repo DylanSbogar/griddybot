@@ -13,25 +13,25 @@ import java.util.Random;
 public class ReactionService {
 
     private static final List<List<String>> REACTION_MESSAGES = List.of(
-            List.of("👀", "➡️", "🇭", "🇦", "🇩", "🇪", "🇸"),
+            List.of("👀", "➡️", "🇭", "🇦", "🇩", "🇪", "🇸"), // H A D E S
             List.of("🆓", "🆘", "🙏", "😭"),
-            List.of("🆂", "🅴", "🅽", "🅳", "🅷", "*️", "🅻", "🅿"),
-            List.of("👀", "🫵", "🅼", "🅰", "🆃", "🦖", "💀", "➡️", "🌈", "🔥"),
-            List.of("👆", "😒", "🆈", "🅾", "🆄", "🇲", "🇦", "🅳", "🇪", "🆃", "🅷", "ℹ️", "🆂"),
+            List.of("\uD83C\uDDF8", "\uD83C\uDDEA", "\uD83C\uDDF3", "\uD83C\uDDE9", "\uD83C\uDDED", "⭐", "\uD83C\uDDF1", "\uD83C\uDDF5"), // S E N D H * L P
+            List.of("👀", "🫵", "🇲", "\uD83C\uDDE6", "\uD83C\uDDF9", "🦖", "💀", "➡️", "🌈", "🔥"), // M A T
+            List.of("👆", "😒", "\uD83C\uDDFE", "🇴", "\uD83C\uDDFA", "🇲", "🇦", "\uD83C\uDDE9", "\uD83C\uDDEA", "\uD83C\uDDF9", "\uD83C\uDDED", "\uD83C\uDDEE", "\uD83C\uDDF8"), // Y O U M A D E T H I S
             List.of("🤡"),
             List.of("👎"),
             List.of("👆", "🐀"),
             List.of("🙂", "🔪"),
             List.of("🖕", "🤏"),
-            List.of("ℹ️", "🇭", "🇦", "🇹", "🇪", "🇾", "🇴", "🇺"),
+            List.of("ℹ️", "🇭", "🇦", "🇹", "🇪", "🇾", "🇴", "🇺"), // I H A T E Y O U
             List.of("👆", "🇮🇱"),
             List.of("<:laugh:1082877301521383474>"),
             List.of("<:bruh:1082876230946267246>"),
             List.of("🖕","🤓"),
             List.of("🖕","👨‍🦽"),
             List.of("🌈"),
-            List.of("🆓", "🅼", "🅴", "☝️", "😤"),
-            List.of("🫵", "🅰", "🆁", "🅴", "🤮"),
+            List.of("🆓", "🇲", "\uD83C\uDDEA", "☝️", "😤"), // M E
+            List.of("🫵", "🅰", "\uD83C\uDDF7", "🇪", "🤮"), // A R E
             List.of("😈", "📋", "✍️", "👀"),
             List.of("⏳", "😒", "🫵", "💀"),
             List.of("🙂", "😬", "🙃", "💀"),
