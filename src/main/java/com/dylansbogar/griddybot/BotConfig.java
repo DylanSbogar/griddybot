@@ -132,7 +132,7 @@ public class BotConfig {
             int daysSinceStart = (int) ChronoUnit.DAYS.between(campaignStartDate, today);
             int tokenBurnCutoff = 14;
 
-            if(daysSinceStart < tokenBurnCutoff) {
+            if(daysSinceStart < tokenBurnCutoff - daysSinceStart) {
                 String message = String.format("<@187817424337240064> day %s of demanding griddy be added to <#1237375983099711569>. You have %s days until tokens start getting burned.",
                         daysSinceStart, tokenBurnCutoff);
                 api.getTextChannelById(CHANNEL_ID).sendMessage(message).queue();
