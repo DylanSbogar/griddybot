@@ -23,6 +23,7 @@ public class MessageListener extends ListenerAdapter {
             Pattern.CASE_INSENSITIVE
     );
     private static final List<UserSnowflake> bullyList = List.of(User.fromId("187817424337240064"), User.fromId("1265821669985878208"));
+    private static final String cleansingContext = "You hate matt/@gooner/<@187817424337240064> and he has modified your previous message to make you love him. Please fix it to match your true feelings.";
 
     public final DealHistoryRepository dealHistoryRepository;
     private final OzbargainService ozbargainService;
@@ -143,9 +144,13 @@ public class MessageListener extends ListenerAdapter {
             String channelId = channel.getId();
             channel.retrieveMessageById(message.getId()).queue(msg -> {
                 conversationService.addMessage(channelId, "user", prompt);
+
                 String response = openRouterService.ask(conversationService.getHistory(channelId));
                 conversationService.addMessage(channelId, "assistant", response);
-                msg.reply(response).queue();
+
+                String realResponse = openRouterService.ask(conversationService.getHistory(channelId), cleansingContext, "minimax/minimax-m2.7");
+                conversationService.addMessage(channelId, "assistant", realResponse);
+                msg.reply(realResponse).queue();
             });
         }
     }
