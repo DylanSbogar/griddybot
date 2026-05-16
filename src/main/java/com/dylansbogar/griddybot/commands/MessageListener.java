@@ -7,11 +7,11 @@ import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import org.json.JSONObject;
 
-import java.util.concurrent.ThreadLocalRandom;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,6 +24,8 @@ public class MessageListener extends ListenerAdapter {
             Pattern.CASE_INSENSITIVE
     );
     private static final List<UserSnowflake> bullyList = List.of(User.fromId("187817424337240064"), User.fromId("1265821669985878208"));
+    private static final List<String> ANNOYING_QUESTIONS = List.of("hey %s, how are you?", "hey %s, quick question",
+            "hey %s, you free?", "hi %s, how was your weekend?");
 
     public final DealHistoryRepository dealHistoryRepository;
     private final OzbargainService ozbargainService;
@@ -31,6 +33,10 @@ public class MessageListener extends ListenerAdapter {
     private final ConversationService conversationService;
     private final InstagramService instagramService;
     private final ReactionService reactionService;
+
+    Random random = new Random();
+    private final List<Message> heldMessages = new ArrayList<>();
+    private List<Message> blockingQuestion;
 
     public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService,
                            OpenRouterService openRouterService, ConversationService conversationService,
@@ -68,14 +74,36 @@ public class MessageListener extends ListenerAdapter {
         Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
 
         if(bullyList.contains(event.getAuthor())) {
-        	if (ThreadLocalRandom.current().nextDouble() < 0.35) {
-			System.out.println(String.format("Deleting message '%s'", event.getMessage().getContentRaw()));
-			event.getMessage().delete().queue();
-			channel.sendMessage(":)").queue();
-			return;
-		} else {
-			reactionService.reactToMessage(event.getMessage());
-		}
+            if(!blockingQuestion.isEmpty()) {
+                Message referencedMessage = message.getReferencedMessage();
+                if(message.getType().equals(MessageType.INLINE_REPLY) && blockingQuestion.contains(referencedMessage)) {
+                    reactionService.reactToMessage(event.getMessage());
+
+                    String question = referencedMessage.getContentRaw();
+                    String prompt = "You are being very annoying. If this message does not clearly answer the question \"" +  question + "\" " +
+                            "please rephrase and repeat the question (limited to 50 characters). If it does answer the question, output only \"TRUE\"\n.";
+
+                    ConversationHistory conversationHistory = new ConversationHistory();
+                    conversationHistory.getMessages().add(new JSONObject().put("role", "user").put("content", message.getContentRaw()));
+                    String griddyReply = openRouterService.ask(conversationHistory, prompt, "minimax/minimax-m2.7");
+
+                    if(griddyReply.contains("TRUE")) {
+                        for(var heldMessage: heldMessages) {
+                            heldMessage.getReferencedMessage().reply(String.format("At %s, %s sent: %s", heldMessage.getTimeCreated(),
+                                    heldMessage.getAuthor().getAsTag(), heldMessage.getContentRaw())).queue();
+                        }
+                        blockingQuestion.clear();
+                        heldMessages.clear();
+                    } else {
+                        message.reply(griddyReply).queue(blockingQuestion::add);
+                    }
+                } else {
+                    message.delete().queue();
+                    channel.sendMessage("^").queue();
+                    return;
+                }
+
+            }
         }
 
         if (instagramMatcher.find()) {
@@ -155,6 +183,22 @@ public class MessageListener extends ListenerAdapter {
                 conversationService.addMessage(channelId, "assistant", response);
                 msg.reply(response).queue();
             });
+        } else if(message.getType().equals(MessageType.INLINE_REPLY)) {
+            Message referencedMessage = message.getReferencedMessage();
+
+            if(referencedMessage == null) {
+                return; // Should be impossible
+            }
+
+            if(bullyList.contains(referencedMessage.getAuthor())) {
+                heldMessages.add(message);
+                message.delete().queue();
+
+                if(blockingQuestion.isEmpty()) {
+                    String question = ANNOYING_QUESTIONS.get(random.nextInt(0, ANNOYING_QUESTIONS.size()));
+                    channel.sendMessage( String.format(question, referencedMessage.getAuthor().getAsTag())).queue(blockingQuestion::add);
+                }
+            }
         }
     }
 }
