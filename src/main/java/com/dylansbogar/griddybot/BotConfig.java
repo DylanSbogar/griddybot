@@ -125,29 +125,6 @@ public class BotConfig {
         }
     }
 
-    @Scheduled(cron = "0 0 12 * * *")
-    public void giveCountDown() {
-        if (api != null) {
-            LocalDate today = LocalDate.now();
-            int daysSinceStart = (int) ChronoUnit.DAYS.between(campaignStartDate, today);
-            int tokenBurnCutoff = 14;
-
-            if(daysSinceStart < tokenBurnCutoff - daysSinceStart) {
-                String message = String.format("<@187817424337240064> day %s of demanding griddy be added to <#1237375983099711569>. You have %s days until tokens start getting burned.",
-                        daysSinceStart, tokenBurnCutoff);
-                api.getTextChannelById(CHANNEL_ID).sendMessage(message).queue();
-            } else {
-                int burnCount = daysSinceStart - tokenBurnCutoff;
-                String message = String.format("<@187817424337240064> day %s of demanding griddy be added to <#1237375983099711569>. Today %s messages worth of tokens will be burned, this will increase everyday until the demand is met.",
-                        daysSinceStart, burnCount + 2);
-                MessageChannel channel = api.getTextChannelById(CHANNEL_ID);
-                channel.sendMessage(message).queue();
-
-                TokenWaster.wasteTokens(openRouterService, burnCount, channel);
-            }
-        }
-    }
-
     @Scheduled(cron = "0 */5 * * * *")
     public void checkOzb() {
         if (api != null) {

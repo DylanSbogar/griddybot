@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
+import java.util.concurrent.ThreadLocalRandom;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +68,14 @@ public class MessageListener extends ListenerAdapter {
         Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
 
         if(bullyList.contains(event.getAuthor())) {
-            reactionService.reactToMessage(event.getMessage());
+        	if (ThreadLocalRandom.current().nextDouble() < 0.35) {
+			System.out.println(String.format("Deleting message '%s'", event.getMessage().getContentRaw()));
+			event.getMessage().delete().queue();
+			channel.sendMessage(":)").queue();
+			return;
+		} else {
+			reactionService.reactToMessage(event.getMessage());
+		}
         }
 
         if (instagramMatcher.find()) {
@@ -130,10 +138,10 @@ public class MessageListener extends ListenerAdapter {
                     channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
                 }
             }
-        } else if(cleaned.matches(".*\\b(6|six)\\b.*\\b(7|seven)\\b.*")) {
+	} else if(cleaned.matches("(?:67)|(?:\\b(?:6|six)\\b.*\\b(?:7|seven)\\b)")) {
             channel.sendMessage("https://tenor.com/view/bosnov-67-bosnov-67-67-meme-gif-16727368109953357722").queue();
-        } else if(cleaned.matches(".*\\b(7|seven)\\b.*\\b(6|six)\\b.*")) {
-            channel.sendMessage("https://tenor.com/view/staring-press-close-staredown-train-gif-22975756").queue();
+        } else if(cleaned.matches("(?:76)|(?:\\b(?:7|seven)\\b.*\\b(?:6|six)\\b)")) {
+	    channel.sendMessage("https://tenor.com/view/staring-press-close-staredown-train-gif-22975756").queue();
         } else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
             if(bullyList.contains(event.getAuthor())) {
                 channel.sendMessage("Owops, sowwy, I dont hewp buwwies >:( . Undew you want to add me to hades-homosexuaws? <:duc:1082878057444036678>").queue();

@@ -25,8 +25,6 @@ public class ReactionService {
             List.of("🖕", "🤏"),
             List.of("ℹ️", "🇭", "🇦", "🇹", "🇪", "🇾", "🇴", "🇺"), // I H A T E Y O U
             List.of("👆", "🇮🇱"),
-            List.of("<:laugh:1082877301521383474>"),
-            List.of("<:bruh:1082876230946267246>"),
             List.of("🖕","🤓"),
             List.of("🖕","👨‍🦽"),
             List.of("🌈"),
