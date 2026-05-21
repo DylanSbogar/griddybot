@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class SocialCreditService {
     private static final String API_URL = "https://openrouter.ai/api/v1/chat/completions";
     private static final String API_KEY = System.getenv("OPENROUTER_API_KEY");
-    private static final String EVAL_MODEL = "meta-llama/llama-3.2-3b-instruct";
+    private static final String EVAL_MODEL = "google/gemini-2.0-flash-001";
     private static final String EDITOR_MODEL = "minimax/minimax-m2.7";
     private static final String EDITOR_USER_ID = "__editor__";
     private static final int MAX_MESSAGES_PER_USER = 500;
@@ -583,15 +583,27 @@ public class SocialCreditService {
         HttpResponse<String> response = HttpClient.newHttpClient()
                 .send(request, HttpResponse.BodyHandlers.ofString());
 
-        JSONObject json = new JSONObject(response.body());
+        String responseBody = response.body();
+        JSONObject json;
+        try {
+            json = new JSONObject(responseBody);
+        } catch (Exception e) {
+            throw new RuntimeException("OpenRouter returned non-JSON response. Body:\n" + responseBody);
+        }
         if (json.has("error")) {
             throw new RuntimeException("OpenRouter error: "
-                    + json.getJSONObject("error").optString("message", "unknown"));
+                    + json.getJSONObject("error").optString("message", "unknown")
+                    + "\nFull response:\n" + json.toString(2));
         }
-        return json.getJSONArray("choices")
+
+        JSONObject message = json.getJSONArray("choices")
                 .getJSONObject(0)
-                .getJSONObject("message")
-                .getString("content");
+                .getJSONObject("message");
+        if (!message.has("content") || message.isNull("content")) {
+            throw new RuntimeException("OpenRouter returned no content. Full response:\n"
+                    + json.toString(2));
+        }
+        return message.getString("content");
     }
 
     private JSONObject extractJson(String raw) {
