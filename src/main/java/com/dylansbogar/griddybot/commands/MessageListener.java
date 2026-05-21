@@ -4,6 +4,7 @@ import com.dylansbogar.griddybot.entities.PostedDeal;
 import com.dylansbogar.griddybot.repositories.DealHistoryRepository;
 import com.dylansbogar.griddybot.utils.*;
 import net.dv8tion.jda.api.entities.*;
+import static com.dylansbogar.griddybot.utils.UserConstants.BULLY_IDS;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -23,7 +24,6 @@ public class MessageListener extends ListenerAdapter {
             "https?://(?:www\\.)?instagram\\.com/reel/[A-Za-z0-9_-]+/?(?:\\?[^\\s]*)?",
             Pattern.CASE_INSENSITIVE
     );
-    private static final List<UserSnowflake> bullyList = List.of(User.fromId("187817424337240064"), User.fromId("1265821669985878208"));
     private static final List<String> ANNOYING_QUESTIONS = List.of("hey %s, how are you?", "hey %s, quick question",
             "hey %s, you free?", "hi %s, how was your weekend?");
 
@@ -73,7 +73,7 @@ public class MessageListener extends ListenerAdapter {
         Pattern promptPattern = Pattern.compile("<@!?" + griddyBot.getId() + ">\\s*(.*)");
         Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
 
-        if(bullyList.contains(event.getAuthor())) {
+        if(BULLY_IDS.contains(event.getAuthor().getId())) {
             if(!blockingQuestion.isEmpty()) {
                 Message referencedMessage = message.getReferencedMessage();
                 if(message.getType().equals(MessageType.INLINE_REPLY) && blockingQuestion.contains(referencedMessage)) {
@@ -107,7 +107,7 @@ public class MessageListener extends ListenerAdapter {
         }
 
         if (instagramMatcher.find()) {
-            if(bullyList.contains(event.getAuthor())) {
+            if(BULLY_IDS.contains(event.getAuthor().getId())) {
                 channel.sendMessage("Owops, sowwy, I dont hewp buwwies >:( . Undew you want to add me to hades-homosexuaws? <:duc:1082878057444036678>").queue();
                 return;
             }
@@ -140,7 +140,7 @@ public class MessageListener extends ListenerAdapter {
                 }
             }
         } else if (content.equalsIgnoreCase("gm") || content.equalsIgnoreCase("gn")) {
-            if(bullyList.contains(event.getAuthor())) {
+            if(BULLY_IDS.contains(event.getAuthor().getId())) {
                 if(content.equalsIgnoreCase("gm")) {
                     channel.sendMessage("Bad morning >:(").queue();
                 } else {
@@ -150,13 +150,13 @@ public class MessageListener extends ListenerAdapter {
             }
             channel.sendMessage(content).queue();
         } else if (thanks.find()) {
-            if(bullyList.contains(event.getAuthor())) {
+            if(BULLY_IDS.contains(event.getAuthor().getId())) {
                 channel.sendMessage("...").queue();
             } else {
                 channel.sendMessage("No worries <3").queue();
             }
         } else if (love.find()) {
-            if(bullyList.contains(event.getAuthor())) {
+            if(BULLY_IDS.contains(event.getAuthor().getId())) {
                 channel.sendMessage("yikes, I dont love anything you do >:(").queue();
             } else {
                 String lovedThing = love.group(1);
@@ -171,7 +171,7 @@ public class MessageListener extends ListenerAdapter {
         } else if(cleaned.matches("(?:76)|(?:\\b(?:7|seven)\\b.*\\b(?:6|six)\\b)")) {
 	    channel.sendMessage("https://tenor.com/view/staring-press-close-staredown-train-gif-22975756").queue();
         } else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
-            if(bullyList.contains(event.getAuthor())) {
+            if(BULLY_IDS.contains(event.getAuthor().getId())) {
                 channel.sendMessage("Owops, sowwy, I dont hewp buwwies >:( . Undew you want to add me to hades-homosexuaws? <:duc:1082878057444036678>").queue();
                 return;
             }
@@ -190,7 +190,7 @@ public class MessageListener extends ListenerAdapter {
                 return; // Should be impossible
             }
 
-            if(bullyList.contains(referencedMessage.getAuthor())) {
+            if(BULLY_IDS.contains(referencedMessage.getAuthor().getId())) {
                 heldMessages.add(message);
                 message.delete().queue();
 

@@ -46,6 +46,10 @@ public class BotConfig {
     private final ConversationService conversationService;
     private final InstagramService instagramService;
     private final ReactionService reactionService;
+    private final SocialCreditService socialCreditService;
+    private final SocialCreditRepository socialCreditRepo;
+
+    private final EmbedGenerator embedGenerator = new EmbedGenerator();
 
     private JDA api;
 
@@ -71,7 +75,8 @@ public class BotConfig {
                 new EmoteCommand(emoteRepo),
                 new MinecraftCommand(),
                 new YenCommand(yenService),
-                new RemindMeCommand(reminderRepo));
+                new RemindMeCommand(reminderRepo),
+                new LeaderboardCommand(socialCreditRepo));
 
         // The text-content of each slash command, which shows to the user upon typing.
         api.updateCommands().addCommands(
@@ -94,7 +99,8 @@ public class BotConfig {
                         .addOption(OptionType.STRING, "date", "The date in DD/MM/YY format.", true)
                         .addOption(OptionType.STRING, "description", "Description of the server.", true),
                 Commands.slash("lastserver", "See how many days it's been since the last server."),
-                Commands.slash("history", "Show the AI conversation summary for this channel.")
+                Commands.slash("history", "Show the AI conversation summary for this channel."),
+                Commands.slash("leaderboard", "Show the social credit leaderboard.")
         ).queue();
 
         return api;
@@ -123,6 +129,30 @@ public class BotConfig {
                 }
             }
         }
+    }
+
+    @Scheduled(cron = "0 0 9 * * MON")
+    public void runSocialCreditWeekly() {
+        if (SocialCreditDebug.DEBUG_MODE) return;
+        runSocialCredit(false);
+    }
+
+    @Scheduled(cron = SocialCreditDebug.DEBUG_CRON)
+    public void runSocialCreditDebug() {
+        if (!SocialCreditDebug.DEBUG_MODE) return;
+        runSocialCredit(true);
+    }
+
+    private void runSocialCredit(boolean debug) {
+        if (api == null) return;
+        MessageChannel channel = api.getTextChannelById(CHANNEL_ID);
+        if (channel == null) {
+            System.out.println("Social credit: channel " + CHANNEL_ID + " not found");
+            return;
+        }
+        System.out.println("Running social credit evaluation (debug=" + debug + ")...");
+        SocialCreditService.WeeklyReport report = socialCreditService.evaluateWeek(channel);
+        channel.sendMessageEmbeds(embedGenerator.buildSocialCreditEmbed(report, debug).build()).queue();
     }
 
     @Scheduled(cron = "0 */5 * * * *")
