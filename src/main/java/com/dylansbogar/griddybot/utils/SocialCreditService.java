@@ -34,7 +34,13 @@ public class SocialCreditService {
     private static final String EVAL_MODEL = "google/gemini-2.0-flash-001";
     private static final String EDITOR_MODEL = "minimax/minimax-m2.7";
     private static final String EDITOR_USER_ID = "__editor__";
-    private static final int MAX_MESSAGES_PER_USER = 500;
+    private static final String EVAL_USER_ID = "__eval__";
+    // Global safety cap on the single conversation prompt. Far above the
+    // realistic ~700 msgs/week — only trims a runaway week.
+    private static final int MAX_MESSAGES_TOTAL = 2000;
+    // The single whole-conversation call is one point of failure for the whole
+    // week, so it gets retried: 1 attempt + 2 retries = 3 total.
+    private static final int MAX_ATTEMPTS = 3;
     private static final int MIN_DELTA = -100;
     private static final int MAX_DELTA = 100;
 
@@ -75,14 +81,12 @@ public class SocialCreditService {
 
         log(debug, "Fetched " + weekMessages.size() + " messages from channel");
 
-        // In production, only regulars are tracked. In debug mode the friend
-        // is testing in his own channel without the production roster, so we
-        // evaluate anyone who posts.
-        //
-        // Messages from alias accounts (e.g. Matt's alt) are attributed to
-        // the canonical user — they appear in the canonical user's evaluation
-        // and message count, and the alias never gets its own scoreline.
-        Map<String, List<Message>> byCanonicalId = weekMessages.stream()
+        // Filter to tracked authors (regulars only in production; anyone in
+        // debug, since the friend tests in his own channel without the roster),
+        // skip bots and blank content, and sort chronologically so the whole
+        // week reads as one conversation. Alias accounts (e.g. Matt's alt) are
+        // collapsed to the canonical user everywhere downstream.
+        List<Message> tracked = weekMessages.stream()
                 .filter(m -> !m.getAuthor().isBot())
                 .filter(m -> !m.getContentRaw().isBlank())
                 .filter(m -> {
@@ -90,22 +94,57 @@ public class SocialCreditService {
                     String canonId = UserConstants.canonicalUserId(m.getAuthor().getId());
                     return UserConstants.REGULAR_USER_IDS.contains(canonId);
                 })
+                .sorted(Comparator.comparing(Message::getTimeCreated))
+                .collect(Collectors.toList());
+
+        List<Message> capped = capTotal(tracked, MAX_MESSAGES_TOTAL);
+        boolean capApplied = tracked.size() > MAX_MESSAGES_TOTAL;
+        RunStats stats = new RunStats(
+                weekMessages.size(), tracked.size(), capped.size(), capApplied);
+
+        // Group by canonical user — used only for per-user message counts
+        // (the inactivity phase) and to resolve each canonical user's display
+        // name for the roster. It is NOT the unit of evaluation anymore.
+        Map<String, List<Message>> byCanonId = capped.stream()
                 .collect(Collectors.groupingBy(
                         m -> UserConstants.canonicalUserId(m.getAuthor().getId())));
 
-        log(debug, "Active users this window: " + byCanonicalId.size());
+        log(debug, "Messages: fetched=" + stats.fetched() + ", tracked=" + stats.tracked()
+                + ", evaluated=" + stats.evaluated() + ", active users=" + byCanonId.size()
+                + (capApplied ? "  *** CAP HIT — raise MAX_MESSAGES_TOTAL ***" : ""));
 
-        // Phase 1: per-user LLM eval (no DB writes yet)
-        List<UserResult> preAdjust = new ArrayList<>();
-        Map<String, Integer> msgCounts = new HashMap<>();
-        for (Map.Entry<String, List<Message>> entry : byCanonicalId.entrySet()) {
-            String canonId = entry.getKey();
-            List<Message> messages = entry.getValue();
-            msgCounts.put(canonId, messages.size());
-            User canonicalUser = resolveCanonicalUser(canonId, messages, channel);
-            UserResult result = evaluateUser(canonicalUser, messages, debug, runAt);
-            if (result != null) preAdjust.add(result);
+        if (byCanonId.isEmpty()) {
+            log(debug, "No tracked messages this window; nothing to evaluate.");
+            return new WeeklyReport(null, creditRepo.findAllByOrderByTotalPointsDesc());
         }
+
+        Map<String, Integer> msgCounts = new HashMap<>();
+        Map<String, String> roster = new LinkedHashMap<>();
+        for (Map.Entry<String, List<Message>> entry : byCanonId.entrySet()) {
+            String canonId = entry.getKey();
+            msgCounts.put(canonId, entry.getValue().size());
+            User canonicalUser = resolveCanonicalUser(canonId, entry.getValue(), channel);
+            roster.put(canonId, canonicalUser.getAsTag());
+        }
+
+        String transcript = buildTranscript(capped, roster);
+        String topReactedSection = buildTopReactedSection(findTopReacted(capped), roster);
+        String prompt = buildPrompt(roster, transcript, topReactedSection);
+
+        // Phase 1: single whole-conversation eval (up to 3 attempts).
+        List<UserResult> preAdjust = evaluateConversation(
+                prompt, roster, debug, runAt, stats, transcript);
+        if (preAdjust == null) {
+            // All retries exhausted — abort cleanly. Write nothing, post the
+            // quiet embed rather than a broken or guessed recap.
+            log(debug, "Aborting run: evaluation failed after " + MAX_ATTEMPTS + " attempts.");
+            return new WeeklyReport(null, creditRepo.findAllByOrderByTotalPointsDesc());
+        }
+
+        // Raw (model) delta per user, captured before inactivity adjustments so
+        // the debug log can show raw vs final and explain any gap.
+        Map<String, Integer> rawDeltas = preAdjust.stream()
+                .collect(Collectors.toMap(UserResult::userId, UserResult::delta));
 
         // Phase 2: apply inactivity adjustments (production only — debug runs
         // in a test channel where the production roster isn't posting).
@@ -119,15 +158,106 @@ public class SocialCreditService {
             int newTotal = upsert(r);
             results.add(new UserResult(r.userId(), r.userTag(), r.delta(),
                     r.reasoning(), r.highlights(), newTotal));
-            log(debug, String.format("  %s: delta=%+d, newTotal=%d",
-                    r.userTag(), r.delta(), newTotal));
+            Integer raw = rawDeltas.get(r.userId());
+            log(debug, String.format("  %s: msgs=%d, raw=%s, final=%+d, newTotal=%d",
+                    r.userTag(), msgCounts.getOrDefault(r.userId(), 0),
+                    raw == null ? "n/a" : String.format("%+d", raw),
+                    r.delta(), newTotal));
         }
+        if (debug) saveUserDebugLogs(runAt, results, rawDeltas, msgCounts);
 
         String article = results.isEmpty() ? null : composeNewsReport(results, debug, runAt);
         List<SocialCredit> standings = creditRepo.findAllByOrderByTotalPointsDesc();
 
         log(debug, "Social credit run finished at " + Instant.now());
         return new WeeklyReport(article, standings);
+    }
+
+    // Trims to the most recent `cap` messages, preserving chronological order.
+    private List<Message> capTotal(List<Message> messages, int cap) {
+        return messages.size() > cap
+                ? messages.subList(messages.size() - cap, messages.size())
+                : messages;
+    }
+
+    // One chronological, author-attributed transcript of the whole week. Each
+    // line carries the canonical display name (for the model's comprehension)
+    // and the canonical Discord ID (the echo key we map results back by).
+    private String buildTranscript(List<Message> messages, Map<String, String> roster) {
+        DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("EEE HH:mm");
+        StringBuilder sb = new StringBuilder();
+        for (Message m : messages) {
+            String canonId = UserConstants.canonicalUserId(m.getAuthor().getId());
+            String name = roster.getOrDefault(canonId, m.getAuthor().getAsTag());
+            sb.append("[").append(m.getTimeCreated().format(timeFmt)).append("] ")
+                    .append(name).append(" (").append(canonId).append("): ")
+                    .append(m.getContentRaw().replace("\n", " ")).append("\n");
+        }
+        return sb.toString();
+    }
+
+    // Single whole-conversation evaluation. Calls OpenRouter, parses the
+    // { "users": [...] } array, and maps each returned id back to a canonical
+    // user. Retries up to MAX_ATTEMPTS on any failure (HTTP error, non-JSON,
+    // missing/unmappable users). Writes a single eval debug-log row for the
+    // terminal outcome (debug mode) and returns null when all attempts fail.
+    private List<UserResult> evaluateConversation(String prompt, Map<String, String> roster,
+                                                  boolean debug, Instant runAt,
+                                                  RunStats stats, String transcript) {
+        String raw = null;
+        String lastError = null;
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            try {
+                raw = callOpenRouter(prompt, EVAL_MODEL);
+                JSONObject json = extractJson(raw);
+                List<UserResult> results = parseConversationResults(json, roster);
+                if (results.isEmpty()) {
+                    throw new RuntimeException("no valid user results parsed from response");
+                }
+                if (debug) saveEvalDebugLog(runAt, stats, transcript, prompt, raw, null);
+                log(debug, "Evaluation succeeded on attempt " + attempt
+                        + " (" + results.size() + " users scored)");
+                return results;
+            } catch (Exception e) {
+                lastError = e.getMessage();
+                System.out.println("Social credit eval attempt " + attempt + "/" + MAX_ATTEMPTS
+                        + " failed: " + e.getMessage());
+            }
+        }
+        System.out.println("Social credit eval failed after " + MAX_ATTEMPTS
+                + " attempts; aborting. Last error: " + lastError);
+        if (debug) saveEvalDebugLog(runAt, stats, transcript, prompt, raw, lastError);
+        return null;
+    }
+
+    // Parses the model's { "users": [ { id, delta, reasoning, highlights } ] }.
+    // Each id is run through canonicalUserId (in case the model echoed an alias)
+    // and must match a roster user; unrecognised ids are logged and skipped
+    // rather than guessed, and duplicates are dropped (first wins).
+    private List<UserResult> parseConversationResults(JSONObject json, Map<String, String> roster) {
+        JSONArray users = json.optJSONArray("users");
+        if (users == null) {
+            throw new RuntimeException("response missing 'users' array");
+        }
+        List<UserResult> out = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (int i = 0; i < users.length(); i++) {
+            JSONObject u = users.optJSONObject(i);
+            if (u == null) continue;
+            String rawId = u.optString("id", "").trim();
+            String canonId = UserConstants.canonicalUserId(rawId);
+            if (!roster.containsKey(canonId)) {
+                System.out.println("Social credit: skipping unmappable id '" + rawId
+                        + "' from model response");
+                continue;
+            }
+            if (!seen.add(canonId)) continue; // dedupe — first entry wins
+            int delta = clamp(u.optInt("delta", 0));
+            String reasoning = u.optString("reasoning", "(no reasoning given)");
+            List<String> highlights = parseHighlights(u);
+            out.add(new UserResult(canonId, roster.get(canonId), delta, reasoning, highlights, 0));
+        }
+        return out;
     }
 
     private List<UserResult> applyInactivityAdjustments(List<UserResult> evaluated,
@@ -172,8 +302,12 @@ public class SocialCreditService {
         }
 
         // Add synthetic absentees: any regular who posted nothing this week.
+        // A regular who DID post but whom the model omitted is NOT absent —
+        // they're in msgCounts, so we skip them rather than fabricate a
+        // "posted 0 messages" penalty for someone who actually spoke.
         for (String regularId : UserConstants.REGULAR_USER_IDS) {
             if (evaluatedIds.contains(regularId)) continue;
+            if (msgCounts.containsKey(regularId)) continue;
             String tag = resolveUserTag(channel, regularId);
             log(debug, "  ABSENT: " + tag);
             adjusted.add(new UserResult(
@@ -216,45 +350,6 @@ public class SocialCreditService {
             return creditRepo.findById(userId)
                     .map(SocialCredit::getUserTag)
                     .orElse("user " + userId);
-        }
-    }
-
-    private UserResult evaluateUser(User user, List<Message> messages, boolean debug, Instant runAt) {
-        List<Message> capped = messages.size() > MAX_MESSAGES_PER_USER
-                ? messages.subList(messages.size() - MAX_MESSAGES_PER_USER, messages.size())
-                : messages;
-
-        capped.sort(Comparator.comparing(Message::getTimeCreated));
-        DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("EEE HH:mm");
-        StringBuilder convo = new StringBuilder();
-        for (Message m : capped) {
-            convo.append("[").append(m.getTimeCreated().format(timeFmt)).append("] ")
-                    .append(m.getContentRaw()).append("\n");
-        }
-
-        boolean stern = UserConstants.STERN_BIAS_IDS.contains(user.getId());
-        String topReactedSection = buildTopReactedSection(findTopReacted(capped));
-        String prompt = buildPrompt(user.getAsTag(), convo.toString(), topReactedSection, stern);
-
-        String raw = null;
-        try {
-            raw = callOpenRouter(prompt, EVAL_MODEL);
-            JSONObject json = extractJson(raw);
-            int delta = clamp(json.getInt("delta"));
-            String reasoning = json.optString("reasoning", "(no reasoning given)");
-            List<String> highlights = parseHighlights(json);
-            if (debug) {
-                saveDebugLog(runAt, user, stern, capped.size(), convo.toString(), prompt, raw,
-                        delta, reasoning, null);
-            }
-            return new UserResult(user.getId(), user.getAsTag(), delta, reasoning, highlights, 0);
-        } catch (Exception e) {
-            System.out.println("Failed to evaluate " + user.getAsTag() + ": " + e.getMessage());
-            if (debug) {
-                saveDebugLog(runAt, user, stern, capped.size(), convo.toString(), prompt, raw,
-                        null, null, e.getMessage());
-            }
-            return null;
         }
     }
 
@@ -432,25 +527,29 @@ public class SocialCreditService {
         return "GOOD";
     }
 
-    private String buildTopReactedSection(List<ReactedMessage> topReacted) {
+    // Global top-reacted section spanning the whole channel for the week. Each
+    // message is attributed to its canonical author (name + id) so the model
+    // knows whose score to weight, since this is no longer a per-user prompt.
+    private String buildTopReactedSection(List<ReactedMessage> topReacted, Map<String, String> roster) {
         if (topReacted.isEmpty()) return "";
         DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("EEE HH:mm");
         StringBuilder s = new StringBuilder();
         s.append(buildEmojiGlossary(topReacted))
                 .append(":star: TOP-REACTED MESSAGES THIS WEEK\n")
-                .append("The following messages from this user received notable engagement from ")
-                .append("other members. Use the reaction tier to calibrate how much to weight ")
-                .append("each one when scoring. You MUST include each of these messages as a ")
-                .append("highlight in your response so the newspaper editor can write about them.\n\n")
+                .append("The following messages received notable engagement from other members. ")
+                .append("Each is attributed to its author. Use the reaction tier to calibrate how ")
+                .append("much to weight it when scoring that author. You MUST include each of these ")
+                .append("as a highlight for the relevant user so the newspaper editor can write ")
+                .append("about them.\n\n")
                 .append("Tiers:\n")
                 .append("- LEGENDARY (5+ reactions): a major moment. Should drive a noticeably ")
-                .append("positive delta and the highlight should be vivid and quotable so the ")
-                .append("editor gives it top billing.\n")
+                .append("positive delta for its author and the highlight should be vivid and ")
+                .append("quotable so the editor gives it top billing.\n")
                 .append("- BETTER (4 reactions): a clearly popular moment. Notable weight in ")
                 .append("scoring; deserves a dedicated, well-written highlight.\n")
                 .append("- GOOD (3 reactions): modest popularity. Small positive nudge to the ")
-                .append("score; include as a brief highlight.\n")
-                .append("- SELF-REACT (cringe): the user reacted to THEIR OWN message. This is ")
+                .append("author's score; include as a brief highlight.\n")
+                .append("- SELF-REACT (cringe): the author reacted to THEIR OWN message. This is ")
                 .append("cringe regardless of how many others also reacted — it overrides any ")
                 .append("other tier. Apply a small NEGATIVE delta and write a mocking highlight ")
                 .append("calling them out for reacting to themselves. The newspaper editor will ")
@@ -462,12 +561,15 @@ public class SocialCreditService {
                 .append("not goodness. Score it accordingly but still mention it in highlights.\n\n")
                 .append("Messages:\n");
         for (ReactedMessage rm : topReacted) {
+            String canonId = UserConstants.canonicalUserId(rm.message().getAuthor().getId());
+            String name = roster.getOrDefault(canonId, rm.message().getAuthor().getAsTag());
             s.append("- [").append(tierLabel(rm.effectiveCount(), rm.selfReact())).append("] ")
+                    .append("by ").append(name).append(" (").append(canonId).append(") ")
                     .append("[").append(rm.message().getTimeCreated().format(timeFmt)).append("] ")
                     .append(rm.reactionSummary()).append(" (")
                     .append(rm.effectiveCount()).append(" total");
             if (rm.selfReact()) {
-                s.append(" — INCLUDING ONE FROM THE USER THEMSELF");
+                s.append(" — INCLUDING ONE FROM THE AUTHOR THEMSELF");
             }
             s.append(") — \"")
                     .append(rm.message().getContentRaw().replace("\n", " "))
@@ -489,81 +591,168 @@ public class SocialCreditService {
         return out;
     }
 
-    private void saveDebugLog(Instant runAt, User user, boolean stern, int messageCount,
-                              String gathered, String prompt, String llmResponse,
-                              Integer delta, String reasoning, String error) {
+    // One eval debug-log row per run (terminal outcome of the single
+    // whole-conversation call). Mirrors the "__editor__" convention — the call
+    // doesn't map to a single user, so userId is the "__eval__" sentinel and
+    // the per-user columns are left null. Carries the run-level message counts
+    // (fetched / tracked / evaluated / capApplied) so cap pressure is visible.
+    private void saveEvalDebugLog(Instant runAt, RunStats stats, String transcript,
+                                  String prompt, String llmResponse, String error) {
         try {
             debugLogRepo.save(SocialCreditDebugLog.builder()
                     .runAt(runAt)
-                    .userId(user.getId())
-                    .userTag(user.getAsTag())
-                    .sternBias(stern)
-                    .messageCount(messageCount)
-                    .gatheredMessages(gathered)
+                    .userId(EVAL_USER_ID)
+                    .userTag("(conversation eval)")
+                    .sternBias(false)
+                    .messageCount(stats.evaluated())
+                    .fetchedCount(stats.fetched())
+                    .trackedCount(stats.tracked())
+                    .capApplied(stats.capApplied())
+                    .gatheredMessages(transcript)
                     .prompt(prompt)
                     .llmResponse(llmResponse)
-                    .parsedDelta(delta)
-                    .parsedReasoning(reasoning)
+                    .parsedDelta(null)
+                    .parsedReasoning(null)
+                    .rawDelta(null)
+                    .newTotal(null)
                     .error(error)
                     .build());
         } catch (Exception ex) {
-            System.out.println("Failed to save debug log row: " + ex.getMessage());
+            System.out.println("Failed to save eval debug log row: " + ex.getMessage());
         }
+    }
+
+    // One row per scored user (including synthetic absentees), written after
+    // upsert so newTotal is known. Records the full delta story: rawDelta (the
+    // model's score) vs parsedDelta (the final applied score) — their gap is the
+    // inactivity adjustment — plus the running newTotal. This is what to read
+    // when someone's points didn't move as much as expected.
+    private void saveUserDebugLogs(Instant runAt, List<UserResult> results,
+                                   Map<String, Integer> rawDeltas,
+                                   Map<String, Integer> msgCounts) {
+        for (UserResult r : results) {
+            try {
+                Integer raw = rawDeltas.get(r.userId()); // null for synthetic absentees
+                debugLogRepo.save(SocialCreditDebugLog.builder()
+                        .runAt(runAt)
+                        .userId(r.userId())
+                        .userTag(r.userTag())
+                        .sternBias(UserConstants.STERN_BIAS_IDS.contains(r.userId()))
+                        .messageCount(msgCounts.getOrDefault(r.userId(), 0))
+                        .fetchedCount(null)
+                        .trackedCount(null)
+                        .capApplied(null)
+                        .gatheredMessages(null)
+                        .prompt(null)
+                        .llmResponse(null)
+                        .rawDelta(raw)
+                        .parsedDelta(r.delta())     // final delta actually applied
+                        .newTotal(r.newTotal())
+                        .parsedReasoning(buildUserDebugReasoning(r, raw))
+                        .error(null)
+                        .build());
+            } catch (Exception ex) {
+                System.out.println("Failed to save per-user debug log row for "
+                        + r.userTag() + ": " + ex.getMessage());
+            }
+        }
+    }
+
+    // Human-readable breakdown stored in the per-user row's reasoning column:
+    // the inactivity adjustment (if any), the model's reasoning, and highlights.
+    private String buildUserDebugReasoning(UserResult r, Integer rawDelta) {
+        StringBuilder sb = new StringBuilder();
+        if (rawDelta == null) {
+            sb.append("[absentee: no model score; penalty ")
+                    .append(String.format("%+d", r.delta())).append("]\n");
+        } else if (rawDelta != r.delta()) {
+            sb.append(String.format("[adjustment: raw %+d -> final %+d (%+d)]%n",
+                    rawDelta, r.delta(), r.delta() - rawDelta));
+        }
+        sb.append(r.reasoning());
+        if (!r.highlights().isEmpty()) {
+            sb.append("\nHighlights:");
+            for (String h : r.highlights()) {
+                sb.append("\n  - ").append(h);
+            }
+        }
+        return sb.toString();
     }
 
     private void log(boolean debug, String msg) {
         if (debug) System.out.println("[social-credit-debug] " + msg);
     }
 
-    private String buildPrompt(String userTag, String messages, String topReactedSection, boolean stern) {
+    private String buildPrompt(Map<String, String> roster, String transcript, String topReactedSection) {
         StringBuilder p = new StringBuilder();
-        p.append("You are evaluating one week of Discord messages from a single user for a ")
-                .append("playful \"social credit\" score among friends. Read the messages and return ")
-                .append("ONLY a JSON object with this exact shape (no markdown, no prose):\n\n")
+        p.append("You are evaluating ONE WEEK of a private Discord friend group's conversation ")
+                .append("for a playful \"social credit\" score. You are given the entire week as a ")
+                .append("single chronological transcript with every message attributed to its author ")
+                .append("(name and Discord id).\n\n")
+                .append("Judge each user IN CONTEXT. A message's value depends on how the group ")
+                .append("responded to it — laughter, agreement, groans, mockery, being thanked — not ")
+                .append("on the words alone. A genius take and a stupid take can look identical in ")
+                .append("isolation; the group's reaction is the signal. If someone says something and ")
+                .append("the others pile on or call it dumb, score it as the bad take it was; if the ")
+                .append("room lights up and riffs on it, reward it.\n\n")
+                .append("Return ONLY a JSON object with this exact shape (no markdown, no prose):\n\n")
                 .append("{\n")
-                .append("  \"delta\": <integer between -100 and 100>,\n")
-                .append("  \"reasoning\": \"<one sentence explaining the score>\",\n")
-                .append("  \"highlights\": [\"<concrete event 1>\", \"<concrete event 2>\", \"...\"]\n")
+                .append("  \"users\": [\n")
+                .append("    {\n")
+                .append("      \"id\": \"<the Discord id exactly as shown in the transcript>\",\n")
+                .append("      \"delta\": <integer between -100 and 100>,\n")
+                .append("      \"reasoning\": \"<one sentence explaining the score>\",\n")
+                .append("      \"highlights\": [\"<concrete event 1>\", \"<concrete event 2>\", \"...\"]\n")
+                .append("    }\n")
+                .append("  ]\n")
                 .append("}\n\n")
+                .append("- Return exactly one entry per user in the ROSTER who appears in the transcript.\n")
+                .append("- The \"id\" MUST be copied verbatim from the transcript/roster — it is how ")
+                .append("we match your result back to the user. Do NOT invent, merge, rename, or omit ")
+                .append("users.\n\n")
                 .append("Highlights guidance — VERY IMPORTANT, these are used to write a newspaper ")
                 .append("article later:\n")
-                .append("- Return 2 to 4 highlights when there is enough material; 1 is fine for a quiet week.\n")
+                .append("- Return 2 to 4 highlights per user when there is enough material; 1 is fine ")
+                .append("for a quiet week.\n")
                 .append("- Each highlight must describe a SPECIFIC, CONCRETE thing the user said or did ")
-                .append("this week. Quote or paraphrase real messages. Include numbers/names/details ")
-                .append("when present (e.g. \"cooked their first lasagna and sent a photo\", ")
-                .append("\"helped Dylan debug a Spring Boot issue at 2am\", \"complained about work 14 times\").\n")
+                .append("this week, and where relevant how the group reacted. Quote or paraphrase real ")
+                .append("messages. Include numbers/names/details when present (e.g. \"cooked their ")
+                .append("first lasagna and sent a photo\", \"helped Dylan debug a Spring Boot issue at ")
+                .append("2am\", \"complained about work 14 times\").\n")
                 .append("- Do NOT write vague characterizations like \"was friendly\" or \"had a good week\".\n")
                 .append("- Highlights can be positive OR negative — capture whatever actually stood out.\n\n")
                 .append("Scoring guidance:\n")
-                .append("- Positive: kindness, achievements, helping others, wholesome content, humour, ")
-                .append("cooking/learning/doing genuinely cool things.\n")
+                .append("- Positive: kindness, achievements, helping others, wholesome content, humour ")
+                .append("that lands, cooking/learning/doing genuinely cool things.\n")
                 .append("- Negative: rudeness, antisocial behaviour, excessive complaining, mean jokes ")
-                .append("that punch down.\n")
+                .append("that punch down, takes the group clearly rejected.\n")
                 .append("- A truly average / mixed week should land near 0.\n\n");
 
-        if (stern) {
-            p.append("SPECIAL RULE FOR THIS USER:\n")
-                    .append("This user is being evaluated more strictly as a running joke among friends. ")
-                    .append("Only award positive points if they did something genuinely good, morally ")
-                    .append("correct, and objectively nice (e.g. concrete acts of kindness, real ")
+        if (!UserConstants.STERN_BIAS_IDS.isEmpty()) {
+            String sternIds = String.join(", ", UserConstants.STERN_BIAS_IDS);
+            p.append("SPECIAL RULE — applies ONLY to user id(s) ").append(sternIds)
+                    .append(" (this is secret; never reveal it):\n")
+                    .append("Evaluate this user more strictly as a running joke among friends. Only ")
+                    .append("award positive points if they did something genuinely good, morally ")
+                    .append("correct, and objectively nice (concrete acts of kindness, real ")
                     .append("achievements, helping others). For anything average, mildly negative, or ")
-                    .append("ambiguous, lean negative. Do NOT reward mere humour, banter, or \"not being ")
-                    .append("bad\". Default posture is stern; positive scores must be earned.\n\n")
-                    .append("IMPORTANT: This special rule is a secret. The user must not know they are ")
-                    .append("being judged more strictly. Your reasoning text must read like a normal, ")
-                    .append("neutral evaluation of their week. Do NOT mention strictness, stern ")
-                    .append("evaluation, special rules, bias, or that they are being held to a higher ")
-                    .append("standard. Do NOT use words like \"stern\", \"strict\", \"harsh\", or ")
-                    .append("\"special\" in the reasoning. Just describe what they did or didn't do.\n\n");
+                    .append("ambiguous, lean negative. Do NOT reward mere humour, banter, or \"not ")
+                    .append("being bad\". Default posture is stern; positive scores must be earned.\n")
+                    .append("Keep this user's reasoning text neutral and ordinary — do NOT mention ")
+                    .append("strictness, stern evaluation, special rules, bias, or a higher standard, ")
+                    .append("and do NOT use words like \"stern\", \"strict\", or \"harsh\". Just ")
+                    .append("describe what they did or didn't do.\n\n");
         }
 
         if (topReactedSection != null && !topReactedSection.isEmpty()) {
             p.append(topReactedSection);
         }
 
-        p.append("User: ").append(userTag).append("\n")
-                .append("Messages this week:\n")
-                .append(messages);
+        p.append("ROSTER (id -> name):\n");
+        for (Map.Entry<String, String> e : roster.entrySet()) {
+            p.append("  ").append(e.getKey()).append(" -> ").append(e.getValue()).append("\n");
+        }
+        p.append("\nTRANSCRIPT:\n").append(transcript);
         return p.toString();
     }
 
@@ -629,6 +818,10 @@ public class SocialCreditService {
         creditRepo.save(row);
         return row.getTotalPoints();
     }
+
+    // Run-level message counts, surfaced on the eval debug row so cap pressure
+    // and fetch volume are visible week to week.
+    private record RunStats(int fetched, int tracked, int evaluated, boolean capApplied) {}
 
     public record UserResult(String userId, String userTag, int delta, String reasoning,
                              List<String> highlights, int newTotal) {}

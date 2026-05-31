@@ -46,4 +46,20 @@ public class SocialCreditDebugLog {
 
     @Column(columnDefinition = "TEXT")
     private String error;
+
+    // ---- Run-level stats (eval row only; null on per-user rows) ----
+    // Spot cap pressure here: if fetchedCount/trackedCount regularly sit at or
+    // above MAX_MESSAGES_TOTAL (capApplied = true), the weekly conversation is
+    // being truncated and the cap should be raised.
+    private Integer fetchedCount;   // raw messages fetched from Discord (pre-filter)
+    private Integer trackedCount;   // after filtering to tracked authors (pre-cap)
+    private Boolean capApplied;     // trackedCount exceeded MAX_MESSAGES_TOTAL
+
+    // ---- Per-user delta breakdown (per-user rows only; null on the eval row) ----
+    // rawDelta  = the model's delta after clamping.
+    // parsedDelta = the final delta actually applied (after inactivity adjustments).
+    // A gap between the two explains "why fewer points than expected".
+    // newTotal  = the running total after this week's delta was applied.
+    private Integer rawDelta;
+    private Integer newTotal;
 }
