@@ -72,7 +72,7 @@ reaction type on each top-reacted message (short-circuited on first match).
 fine for a once-a-week job.
 
 - "Reactions" means effective Discord reactions: total count **minus**
-  Griddybot's own reactions (`MessageReaction.isSelf()`). This stops the
+  Griddy's own reactions (`MessageReaction.isSelf()`). This stops the
   bot's bully-reactions from looking like popularity.
 - 7TV / BetterTTV inline emotes are NOT reactions and don't count.
 - Top-reacted messages are always promoted to highlights, guaranteeing the

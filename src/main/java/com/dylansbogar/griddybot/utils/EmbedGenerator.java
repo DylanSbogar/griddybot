@@ -21,7 +21,7 @@ public class EmbedGenerator {
         EmbedBuilder embed = new EmbedBuilder();
         embed.setTitle(title);
         embed.setThumbnail(thumbnailURL);
-        embed.setAuthor("Griddybot", GRIDDY_ICON_URL);
+        embed.setAuthor("Griddy", GRIDDY_ICON_URL);
         embed.setDescription(description);
 
         for (MessageEmbed.Field field: fields) {
@@ -33,15 +33,15 @@ public class EmbedGenerator {
 
     public EmbedBuilder buildSocialCreditEmbed(WeeklyReport report, boolean debug) {
         EmbedBuilder embed = new EmbedBuilder();
-        embed.setAuthor("Griddybot", null, GRIDDY_ICON_URL);
+        embed.setAuthor("Griddy", null, GRIDDY_ICON_URL);
         String prefix = debug ? "[DEBUG] " : "";
-        embed.setTitle(prefix + ":newspaper: The Griddybot Gazette — "
+        embed.setTitle(prefix + ":newspaper: The Griddy Gazette — "
                 + LocalDate.now().format(DateTimeFormatter.ofPattern("d MMM yyyy")));
 
         String standings = buildStandingsSection(report.standings());
 
         if (report.article() == null || report.article().isBlank()) {
-            String quietMsg = "_All quiet on the Griddybot front this week. No new activity to report._";
+            String quietMsg = "_All quiet on the Griddy front this week. No new activity to report._";
             embed.setDescription(quietMsg + "\n\n" + standings);
             return embed;
         }

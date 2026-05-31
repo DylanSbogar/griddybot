@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.entities.sticker.StickerItem;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
@@ -83,12 +84,13 @@ public class SocialCreditService {
 
         // Filter to tracked authors (regulars only in production; anyone in
         // debug, since the friend tests in his own channel without the roster),
-        // skip bots and blank content, and sort chronologically so the whole
+        // skip bots and truly empty messages (kept if they carry text, an
+        // attachment, or a sticker), and sort chronologically so the whole
         // week reads as one conversation. Alias accounts (e.g. Matt's alt) are
         // collapsed to the canonical user everywhere downstream.
         List<Message> tracked = weekMessages.stream()
                 .filter(m -> !m.getAuthor().isBot())
-                .filter(m -> !m.getContentRaw().isBlank())
+                .filter(this::hasContent)
                 .filter(m -> {
                     if (debug) return true;
                     String canonId = UserConstants.canonicalUserId(m.getAuthor().getId());
@@ -191,7 +193,38 @@ public class SocialCreditService {
             String name = roster.getOrDefault(canonId, m.getAuthor().getAsTag());
             sb.append("[").append(m.getTimeCreated().format(timeFmt)).append("] ")
                     .append(name).append(" (").append(canonId).append("): ")
-                    .append(m.getContentRaw().replace("\n", " ")).append("\n");
+                    .append(renderMessageContent(m)).append("\n");
+        }
+        return sb.toString();
+    }
+
+    // A message "counts" if it has text, OR carries media (an image/file/video
+    // attachment or a sticker) even with no caption. Image- and sticker-only
+    // messages are a big part of how the group actually communicates, so they
+    // must feed the transcript, the reaction tiers, and the activity counts —
+    // not get dropped as "blank" the way a raw getContentRaw().isBlank() check
+    // would drop them.
+    private boolean hasContent(Message m) {
+        return !m.getContentRaw().isBlank()
+                || !m.getAttachments().isEmpty()
+                || !m.getStickers().isEmpty();
+    }
+
+    // Renders a message as one transcript-safe line: its text (newlines
+    // flattened) followed by bracketed placeholders for any attachments or
+    // stickers, so an image- or sticker-only message still reads as a real
+    // event (e.g. "[image: cursed_cat.png]") instead of an empty string the
+    // model would silently skip over.
+    private String renderMessageContent(Message m) {
+        StringBuilder sb = new StringBuilder(m.getContentRaw().replace("\n", " ").trim());
+        for (Message.Attachment a : m.getAttachments()) {
+            if (sb.length() > 0) sb.append(" ");
+            String kind = a.isImage() ? "image" : a.isVideo() ? "video" : "file";
+            sb.append("[").append(kind).append(": ").append(a.getFileName()).append("]");
+        }
+        for (StickerItem s : m.getStickers()) {
+            if (sb.length() > 0) sb.append(" ");
+            sb.append("[sticker: ").append(s.getName()).append("]");
         }
         return sb.toString();
     }
@@ -377,7 +410,7 @@ public class SocialCreditService {
     private String buildEditorPrompt(List<UserResult> results) {
         StringBuilder p = new StringBuilder();
         p.append("You are the editor of a sensationalist 1920s newspaper, ")
-                .append("\"The Griddybot Gazette\", reporting on this week's antics in a ")
+                .append("\"The Griddy Gazette\", reporting on this week's antics in a ")
                 .append("private Discord friend group. Write the week's report.\n\n")
                 .append("FORMAT:\n")
                 .append("- For each user below, write an ALL-CAPS BOLD HEADLINE in markdown ")
@@ -445,7 +478,7 @@ public class SocialCreditService {
 
     // Returns messages with effective reaction count >= REACTION_TIER_GOOD,
     // sorted by count descending. "Effective" = total reactions minus bot
-    // self-reactions (Griddybot reacts to bullies via ReactionService — we
+    // self-reactions (Griddy reacts to bullies via ReactionService — we
     // don't want being bullied to look like popularity).
     //
     // Each qualifying message is also checked for self-reactions (the author
@@ -572,7 +605,7 @@ public class SocialCreditService {
                 s.append(" — INCLUDING ONE FROM THE AUTHOR THEMSELF");
             }
             s.append(") — \"")
-                    .append(rm.message().getContentRaw().replace("\n", " "))
+                    .append(renderMessageContent(rm.message()))
                     .append("\"\n");
         }
         s.append("\n");
