@@ -22,7 +22,7 @@ package com.dylansbogar.griddybot.utils;
 // from @Scheduled annotations. Rebuild after changing.
 // ============================================================
 public final class SocialCreditDebug {
-    public static final boolean DEBUG_MODE = true;
+    public static final boolean DEBUG_MODE = false;
 
     // Every 2 minutes. Examples:
     //   "0 */2 * * * *"  — every 2 minutes
