@@ -36,7 +36,7 @@ public class MessageListener extends ListenerAdapter {
 
     Random random = new Random();
     private final List<Message> heldMessages = new ArrayList<>();
-    private List<Message> blockingQuestion;
+    private List<Message> blockingQuestion = new ArrayList<>();
 
     public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService,
                            OpenRouterService openRouterService, ConversationService conversationService,
