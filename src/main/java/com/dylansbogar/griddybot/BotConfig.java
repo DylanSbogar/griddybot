@@ -2,6 +2,7 @@ package com.dylansbogar.griddybot;
 
 import com.dylansbogar.griddybot.commands.*;
 import com.dylansbogar.griddybot.entities.Reminder;
+import com.dylansbogar.griddybot.entities.SocialCredit;
 import com.dylansbogar.griddybot.repositories.*;
 import com.dylansbogar.griddybot.utils.*;
 import com.dylansbogar.griddybot.utils.ozbargain.Deal;
@@ -12,18 +13,23 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Configuration
 @RequiredArgsConstructor
@@ -46,6 +52,10 @@ public class BotConfig {
     private final ConversationService conversationService;
     private final InstagramService instagramService;
     private final ReactionService reactionService;
+    private final SocialCreditService socialCreditService;
+    private final SocialCreditRepository socialCreditRepo;
+
+    private final EmbedGenerator embedGenerator = new EmbedGenerator();
 
     private JDA api;
 
@@ -71,7 +81,8 @@ public class BotConfig {
                 new EmoteCommand(emoteRepo),
                 new MinecraftCommand(),
                 new YenCommand(yenService),
-                new RemindMeCommand(reminderRepo));
+                new RemindMeCommand(reminderRepo),
+                new LeaderboardCommand(socialCreditRepo));
 
         // The text-content of each slash command, which shows to the user upon typing.
         api.updateCommands().addCommands(
@@ -94,7 +105,8 @@ public class BotConfig {
                         .addOption(OptionType.STRING, "date", "The date in DD/MM/YY format.", true)
                         .addOption(OptionType.STRING, "description", "Description of the server.", true),
                 Commands.slash("lastserver", "See how many days it's been since the last server."),
-                Commands.slash("history", "Show the AI conversation summary for this channel.")
+                Commands.slash("history", "Show the AI conversation summary for this channel."),
+                Commands.slash("leaderboard", "Show the social credit leaderboard.")
         ).queue();
 
         return api;
@@ -123,6 +135,73 @@ public class BotConfig {
                 }
             }
         }
+    }
+
+    @Scheduled(cron = "0 0 9 * * MON")
+    public void runSocialCreditWeekly() {
+        if (SocialCreditDebug.DEBUG_MODE) return;
+        runSocialCredit(false);
+    }
+
+    // Spring's @Scheduled does NOT replay a cron firing that was missed while
+    // the app was down — and a Pi reboots. If the bot is offline at 9am Monday,
+    // that week would otherwise never be scored, and the gap falls permanently
+    // out of the next run's 7-day window. On startup we check the most recent
+    // successful evaluation: if it's more than 7 days old, at least one Monday
+    // was missed, so we run the weekly evaluation once to catch up. A fresh
+    // install (no prior run) is left alone — there is nothing to recover, so we
+    // just wait for the first Monday.
+    @EventListener(ApplicationReadyEvent.class)
+    public void catchUpSocialCreditOnStartup() {
+        if (SocialCreditDebug.DEBUG_MODE || api == null) return;
+        // JDA logs in asynchronously; wait for it on a daemon thread so a bad
+        // token (which would never become ready) can't hang app startup.
+        Thread t = new Thread(() -> {
+            try {
+                api.awaitReady();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            Instant lastRun = socialCreditRepo.findAll().stream()
+                    .map(SocialCredit::getLastEvaluatedAt)
+                    .filter(Objects::nonNull)
+                    .max(Comparator.naturalOrder())
+                    .orElse(null);
+            if (lastRun == null) {
+                System.out.println("Social credit: no prior evaluation on record; "
+                        + "skipping startup catch-up (waiting for the next Monday).");
+                return;
+            }
+            if (lastRun.isAfter(Instant.now().minus(7, ChronoUnit.DAYS))) {
+                System.out.println("Social credit: last evaluation " + lastRun
+                        + " is within 7 days; no catch-up needed.");
+                return;
+            }
+            System.out.println("Social credit: last evaluation " + lastRun
+                    + " is over 7 days ago — a weekly run was missed. Catching up now.");
+            runSocialCredit(false);
+        }, "social-credit-catchup");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    @Scheduled(cron = SocialCreditDebug.DEBUG_CRON)
+    public void runSocialCreditDebug() {
+        if (!SocialCreditDebug.DEBUG_MODE) return;
+        runSocialCredit(true);
+    }
+
+    private void runSocialCredit(boolean debug) {
+        if (api == null) return;
+        MessageChannel channel = api.getTextChannelById(CHANNEL_ID);
+        if (channel == null) {
+            System.out.println("Social credit: channel " + CHANNEL_ID + " not found");
+            return;
+        }
+        System.out.println("Running social credit evaluation (debug=" + debug + ")...");
+        SocialCreditService.WeeklyReport report = socialCreditService.evaluateWeek(channel);
+        channel.sendMessageEmbeds(embedGenerator.buildSocialCreditEmbed(report, debug).build()).queue();
     }
 
     @Scheduled(cron = "0 */5 * * * *")

@@ -42,3 +42,6 @@ build/
 
 ### Stored Emotes ###
 **/src/main/resources/emotes/*
+
+### Claude (plan files, local settings) ###
+.claude/
