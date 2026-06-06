@@ -33,6 +33,26 @@ public final class UserConstants {
         return ACCOUNT_ALIASES.getOrDefault(userId, userId);
     }
 
+    // Real first names for the regulars, keyed by canonical user ID. Used
+    // everywhere a person is shown to humans (the Griddy Gazette byline and the
+    // leaderboard) so we print "Duc" instead of the raw Discord tag like
+    // "Supayyyer#0000". Anyone not listed here falls back to their tag.
+    public static final Map<String, String> DISPLAY_NAMES = Map.of(
+            MATT_ID,   "Matt",
+            DYLAN_ID,  "Dylan",
+            DUC_ID,    "Duc",
+            BRODEY_ID, "Brodey",
+            DEAN_ID,   "Dean"
+    );
+
+    // Resolves the human-facing name for a user. Returns the mapped real first
+    // name when the (canonicalised) ID is known, otherwise the supplied
+    // fallback — typically the Discord tag from getAsTag(). Aliases resolve to
+    // the canonical person's name (e.g. Matt's alt shows as "Matt").
+    public static String displayName(String userId, String fallbackTag) {
+        return DISPLAY_NAMES.getOrDefault(canonicalUserId(userId), fallbackTag);
+    }
+
     // Users targeted by the "bully" features in MessageListener.
     public static final List<String> BULLY_IDS = List.of(MATT_ID, OTHER_MATT_ID);
 

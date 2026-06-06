@@ -63,7 +63,8 @@ public class EmbedGenerator {
                     ? ""
                     : String.format("  _(%+d)_", row.getLastWeekDelta());
             sb.append(String.format("%s**%s** — %,d pts%s%n",
-                    medal, row.getUserTag(), row.getTotalPoints(), deltaNote));
+                    medal, UserConstants.displayName(row.getUserId(), row.getUserTag()),
+                    row.getTotalPoints(), deltaNote));
         }
         return sb.toString();
     }
