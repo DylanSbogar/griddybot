@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public class SocialCreditService {
     private static final String API_URL = "https://openrouter.ai/api/v1/chat/completions";
     private static final String API_KEY = System.getenv("OPENROUTER_API_KEY");
-    private static final String EVAL_MODEL = "google/gemini-2.0-flash-001";
+    private static final String EVAL_MODEL = "google/gemini-2.5-flash";
     private static final String EDITOR_MODEL = "minimax/minimax-m2.7";
     private static final String EDITOR_USER_ID = "__editor__";
     private static final String EVAL_USER_ID = "__eval__";
