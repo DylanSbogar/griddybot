@@ -2,6 +2,7 @@ package com.dylansbogar.griddybot.commands;
 
 import com.dylansbogar.griddybot.entities.SocialCredit;
 import com.dylansbogar.griddybot.repositories.SocialCreditRepository;
+import com.dylansbogar.griddybot.utils.UserConstants;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -41,7 +42,8 @@ public class LeaderboardCommand extends ListenerAdapter {
                     ? ""
                     : String.format("  _(last week %+d)_", r.getLastWeekDelta());
             body.append(String.format("%s**%s** — %,d pts%s%n",
-                    medal, r.getUserTag(), r.getTotalPoints(), deltaNote));
+                    medal, UserConstants.displayName(r.getUserId(), r.getUserTag()),
+                    r.getTotalPoints(), deltaNote));
         }
         embed.setDescription(body.toString());
 

@@ -126,7 +126,7 @@ public class SocialCreditService {
             String canonId = entry.getKey();
             msgCounts.put(canonId, entry.getValue().size());
             User canonicalUser = resolveCanonicalUser(canonId, entry.getValue(), channel);
-            roster.put(canonId, canonicalUser.getAsTag());
+            roster.put(canonId, UserConstants.displayName(canonId, canonicalUser.getAsTag()));
         }
 
         String transcript = buildTranscript(capped, roster);
@@ -341,7 +341,7 @@ public class SocialCreditService {
         for (String regularId : UserConstants.REGULAR_USER_IDS) {
             if (evaluatedIds.contains(regularId)) continue;
             if (msgCounts.containsKey(regularId)) continue;
-            String tag = resolveUserTag(channel, regularId);
+            String tag = UserConstants.displayName(regularId, resolveUserTag(channel, regularId));
             log(debug, "  ABSENT: " + tag);
             adjusted.add(new UserResult(
                     regularId, tag, ABSENT_PENALTY,
