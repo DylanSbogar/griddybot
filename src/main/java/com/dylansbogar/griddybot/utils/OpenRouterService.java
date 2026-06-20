@@ -15,7 +15,7 @@ public class OpenRouterService {
     private static final String API_URL = "https://openrouter.ai/api/v1/chat/completions";
     private static final String API_KEY = System.getenv("OPENROUTER_API_KEY");
     private String defaultModel = "@preset/brodeys-cringe";
-    private String defaultContext = "(Please keep your response under 2000 characters, you hate matt/@gooner/<@187817424337240064>)";
+    private String defaultContext = "(Please keep your response under 2000 characters)";
 
     public String getDefaultModel() { return defaultModel; }
     public void setDefaultModel(String defaultModel) { this.defaultModel = defaultModel; }

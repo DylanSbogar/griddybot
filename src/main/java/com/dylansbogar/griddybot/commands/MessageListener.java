@@ -4,7 +4,7 @@ import com.dylansbogar.griddybot.entities.PostedDeal;
 import com.dylansbogar.griddybot.repositories.DealHistoryRepository;
 import com.dylansbogar.griddybot.utils.*;
 import net.dv8tion.jda.api.entities.*;
-import static com.dylansbogar.griddybot.utils.UserConstants.BULLY_IDS;
+
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -50,8 +50,7 @@ public class MessageListener extends ListenerAdapter {
     }
 
     @Override
-    public void onMessageReceived(MessageReceivedEvent event)
-    {
+    public void onMessageReceived(MessageReceivedEvent event) {
         // Ensure griddybot does not respond to itself.
         if (event.getAuthor().isBot()) return;
 
@@ -73,45 +72,7 @@ public class MessageListener extends ListenerAdapter {
         Pattern promptPattern = Pattern.compile("<@!?" + griddyBot.getId() + ">\\s*(.*)");
         Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
 
-        if(BULLY_IDS.contains(event.getAuthor().getId())) {
-            if(!blockingQuestion.isEmpty()) {
-                Message referencedMessage = message.getReferencedMessage();
-                if(message.getType().equals(MessageType.INLINE_REPLY) && blockingQuestion.contains(referencedMessage)) {
-                    reactionService.reactToMessage(event.getMessage());
-
-                    String question = referencedMessage.getContentRaw();
-                    String prompt = "You are being very annoying. If this message does not clearly answer the question \"" +  question + "\" " +
-                            "please rephrase and repeat the question (limited to 50 characters). If it does answer the question, output only \"TRUE\"\n.";
-
-                    ConversationHistory conversationHistory = new ConversationHistory();
-                    conversationHistory.getMessages().add(new JSONObject().put("role", "user").put("content", message.getContentRaw()));
-                    String griddyReply = openRouterService.ask(conversationHistory, prompt, "minimax/minimax-m2.7");
-
-                    if(griddyReply.contains("TRUE")) {
-                        for(var heldMessage: heldMessages) {
-                            heldMessage.getReferencedMessage().reply(String.format("At %s, %s sent: %s", heldMessage.getTimeCreated(),
-                                    heldMessage.getAuthor().getAsTag(), heldMessage.getContentRaw())).queue();
-                        }
-                        blockingQuestion.clear();
-                        heldMessages.clear();
-                    } else {
-                        message.reply(griddyReply).queue(blockingQuestion::add);
-                    }
-                } else {
-                    message.delete().queue();
-                    channel.sendMessage("^").queue();
-                    return;
-                }
-
-            }
-        }
-
         if (instagramMatcher.find()) {
-            if(BULLY_IDS.contains(event.getAuthor().getId())) {
-                channel.sendMessage("Owops, sowwy, I dont hewp buwwies >:( . Undew you want to add me to hades-homosexuaws? <:duc:1082878057444036678>").queue();
-                return;
-            }
-
             String instagramUrl = instagramMatcher.group();
             channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
                 String mediaUrl = instagramService.getMediaUrl(instagramUrl);
@@ -130,8 +91,8 @@ public class MessageListener extends ListenerAdapter {
                 String fullUrl = fullUrlMatcher.group();
                 String dealId = fullUrl.replaceAll("\\D+", "");
 
- 		if (dealHistoryRepository.existsById(dealId)) {
-     			channel.retrieveMessageById(event.getMessageId()).queue(msg ->
+                if (dealHistoryRepository.existsById(dealId)) {
+                    channel.retrieveMessageById(event.getMessageId()).queue(msg ->
                             msg.reply(":rotating_light: Repost detected :rotating_light:").queue());
                 } else {
                     dealHistoryRepository.save(new PostedDeal(dealId));
@@ -140,41 +101,21 @@ public class MessageListener extends ListenerAdapter {
                 }
             }
         } else if (content.equalsIgnoreCase("gm") || content.equalsIgnoreCase("gn")) {
-            if(BULLY_IDS.contains(event.getAuthor().getId())) {
-                if(content.equalsIgnoreCase("gm")) {
-                    channel.sendMessage("Bad morning >:(").queue();
-                } else {
-                    channel.sendMessage("Bad night >:(").queue();
-                }
-                return;
-            }
             channel.sendMessage(content).queue();
         } else if (thanks.find()) {
-            if(BULLY_IDS.contains(event.getAuthor().getId())) {
-                channel.sendMessage("...").queue();
-            } else {
-                channel.sendMessage("No worries <3").queue();
-            }
+            channel.sendMessage("No worries <3").queue();
         } else if (love.find()) {
-            if(BULLY_IDS.contains(event.getAuthor().getId())) {
-                channel.sendMessage("yikes, I dont love anything you do >:(").queue();
+            String lovedThing = love.group(1);
+            if (lovedThing.length() > 1950) { // To ensure we don't surpass Discords maximum message length.
+                channel.sendMessage("yikes, I don't love all that").queue();
             } else {
-                String lovedThing = love.group(1);
-                if (lovedThing.length() > 1950) { // To ensure we don't surpass Discords maximum message length.
-                    channel.sendMessage("yikes, I don't love all that").queue();
-                } else {
-                    channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
-                }
+                channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
             }
-	} else if(cleaned.matches("(?:67)|(?:\\b(?:6|six)\\b.*\\b(?:7|seven)\\b)")) {
+        } else if (cleaned.matches("(?:67)|(?:\\b(?:6|six)\\b.*\\b(?:7|seven)\\b)")) {
             channel.sendMessage("https://tenor.com/view/bosnov-67-bosnov-67-67-meme-gif-16727368109953357722").queue();
-        } else if(cleaned.matches("(?:76)|(?:\\b(?:7|seven)\\b.*\\b(?:6|six)\\b)")) {
-	    channel.sendMessage("https://tenor.com/view/staring-press-close-staredown-train-gif-22975756").queue();
+        } else if (cleaned.matches("(?:76)|(?:\\b(?:7|seven)\\b.*\\b(?:6|six)\\b)")) {
+            channel.sendMessage("https://tenor.com/view/staring-press-close-staredown-train-gif-22975756").queue();
         } else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
-            if(BULLY_IDS.contains(event.getAuthor().getId())) {
-                channel.sendMessage("Owops, sowwy, I dont hewp buwwies >:( . Undew you want to add me to hades-homosexuaws? <:duc:1082878057444036678>").queue();
-                return;
-            }
             String prompt = promptMatcher.group(1);
             String channelId = channel.getId();
             channel.retrieveMessageById(message.getId()).queue(msg -> {
@@ -183,21 +124,10 @@ public class MessageListener extends ListenerAdapter {
                 conversationService.addMessage(channelId, "assistant", response);
                 msg.reply(response).queue();
             });
-        } else if(message.getType().equals(MessageType.INLINE_REPLY)) {
+        } else if (message.getType().equals(MessageType.INLINE_REPLY)) {
             Message referencedMessage = message.getReferencedMessage();
-
-            if(referencedMessage == null) {
+            if (referencedMessage == null) {
                 return; // Should be impossible
-            }
-
-            if(BULLY_IDS.contains(referencedMessage.getAuthor().getId())) {
-                heldMessages.add(message);
-                message.delete().queue();
-
-                if(blockingQuestion.isEmpty()) {
-                    String question = ANNOYING_QUESTIONS.get(random.nextInt(0, ANNOYING_QUESTIONS.size()));
-                    channel.sendMessage( String.format(question, referencedMessage.getAuthor().getAsTag())).queue(blockingQuestion::add);
-                }
             }
         }
     }
