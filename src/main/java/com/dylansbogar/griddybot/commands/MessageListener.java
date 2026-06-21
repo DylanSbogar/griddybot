@@ -29,6 +29,9 @@ public class MessageListener extends ListenerAdapter {
 //            Pattern.CASE_INSENSITIVE
 //    );
 
+    private static final Pattern sixSevenPattern = Pattern.compile("(?:67)|(?:\\b(?:6|six)\\b.*\\b(?:7|seven)\\b)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern sevenSixPattern = Pattern.compile("(?:76)|(?:\\b(?:7|seven)\\b.*\\b(?:6|six)\\b)", Pattern.CASE_INSENSITIVE);
+
     public final DealHistoryRepository dealHistoryRepository;
     private final OzbargainService ozbargainService;
     private final OpenRouterService openRouterService;
@@ -129,9 +132,9 @@ public class MessageListener extends ListenerAdapter {
             } else {
                 channel.sendMessage(String.format("I love %s charlie\nI love %s!!!", lovedThing, lovedThing)).queue();
             }
-        } else if (cleaned.matches("(?:67)|(?:\\b(?:6|six)\\b.*\\b(?:7|seven)\\b)")) {
+        } else if (sixSevenPattern.matcher(cleaned).find()) {
             channel.sendMessage("https://tenor.com/view/bosnov-67-bosnov-67-67-meme-gif-16727368109953357722").queue();
-        } else if (cleaned.matches("(?:76)|(?:\\b(?:7|seven)\\b.*\\b(?:6|six)\\b)")) {
+        } else if (sevenSixPattern.matcher(cleaned).find()) {
             channel.sendMessage("https://tenor.com/view/staring-press-close-staredown-train-gif-22975756").queue();
         } else if (message.getMentions().getUsers().contains(griddyBot) && promptMatcher.find()) {
             String prompt = promptMatcher.group(1);
