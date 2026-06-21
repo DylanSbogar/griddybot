@@ -30,7 +30,6 @@ public class BotConfig {
     private static final String CHANNEL_ID = System.getenv("CHANNEL_ID");
     private static final int MIN_UPVOTES = 5;
     private static final double MIN_UPVOTES_PER_MINUTE = 1.0;
-    private static final LocalDate campaignStartDate = LocalDate.of(2026, 4, 26);
 
     private final DaylistRepository daylistRepo;
     private final DaylistDescriptionRepository daylistDescriptionRepo;
@@ -43,9 +42,6 @@ public class BotConfig {
     private final OpenRouterService openRouterService;
     private final ConversationService conversationService;
     private final InstagramService instagramService;
-    private final ReactionService reactionService;
-
-    private final EmbedGenerator embedGenerator = new EmbedGenerator();
 
     private JDA api;
 
@@ -62,7 +58,7 @@ public class BotConfig {
         // Each command class is defined here.
         api.addEventListener(
                 new MessageListener(dealHistoryRepo, ozbargainService, openRouterService, conversationService,
-                        instagramService, reactionService),
+                        instagramService),
                 new ModelCommand(openRouterService),
                 new LastServerCommand(lastServerRepo),
                 new HistoryCommand(conversationService),

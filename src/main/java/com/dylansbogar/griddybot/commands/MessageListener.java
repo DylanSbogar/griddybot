@@ -8,11 +8,7 @@ import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,29 +20,29 @@ public class MessageListener extends ListenerAdapter {
             "https?://(?:www\\.)?instagram\\.com/reel/[A-Za-z0-9_-]+/?(?:\\?[^\\s]*)?",
             Pattern.CASE_INSENSITIVE
     );
-    private static final List<String> ANNOYING_QUESTIONS = List.of("hey %s, how are you?", "hey %s, quick question",
-            "hey %s, you free?", "hi %s, how was your weekend?");
+    private static final Pattern xPattern = Pattern.compile(
+            "https?://(?:www\\.)?(?:x\\.com|fxtwitter\\.com)/[A-Za-z0-9_]{1,15}/status/\\d+/?(?:\\?[^\\s]*)?",
+            Pattern.CASE_INSENSITIVE);
+
+//    private static final Pattern tiktokPattern = Pattern.compile(
+//            "https?://(?:www\\.)?tiktok\\.com/@[A-Za-z0-9_.]+/video/\\d+/?(?:\\?[^\\s]*)?",
+//            Pattern.CASE_INSENSITIVE
+//    );
 
     public final DealHistoryRepository dealHistoryRepository;
     private final OzbargainService ozbargainService;
     private final OpenRouterService openRouterService;
     private final ConversationService conversationService;
     private final InstagramService instagramService;
-    private final ReactionService reactionService;
-
-    Random random = new Random();
-    private final List<Message> heldMessages = new ArrayList<>();
-    private List<Message> blockingQuestion = new ArrayList<>();
 
     public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService,
                            OpenRouterService openRouterService, ConversationService conversationService,
-                           InstagramService instagramService, ReactionService reactionService) {
+                           InstagramService instagramService) {
         this.dealHistoryRepository = dealHistoryRepository;
         this.ozbargainService = ozbargainService;
         this.openRouterService = openRouterService;
         this.conversationService = conversationService;
         this.instagramService = instagramService;
-        this.reactionService = reactionService;
     }
 
     @Override
@@ -68,6 +64,8 @@ public class MessageListener extends ListenerAdapter {
         Matcher thanks = thanksPattern.matcher(content);
         Matcher love = lovePattern.matcher(content);
         Matcher instagramMatcher = instagramReelPattern.matcher(content);
+        Matcher xMatcher = xPattern.matcher(content);
+//        Matcher tiktokMatcher = tiktokPattern.matcher(content);
 
         Pattern promptPattern = Pattern.compile("<@!?" + griddyBot.getId() + ">\\s*(.*)");
         Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
@@ -82,7 +80,27 @@ public class MessageListener extends ListenerAdapter {
                     msg.reply("Couldn't retrieve media for that reel, sorry!").queue();
                 }
             });
-        } else if (content.startsWith(ozbargain)) {
+        } else if (xMatcher.find()) {
+            String xUrl = xMatcher.group();
+            channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
+                String mediaUrl = instagramService.getMediaUrl(xUrl);
+                if (mediaUrl != null) {
+                    msg.reply(mediaUrl).queue();
+                }
+            });
+        }
+//        else if (tiktokMatcher.find()) {
+//            String tiktokUrl = tiktokMatcher.group();
+//            channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
+//                String mediaUrl = instagramService.getMediaUrl(tiktokUrl);
+//                if (mediaUrl != null) {
+//                    msg.reply(mediaUrl).queue();
+//                } else {
+//                    msg.reply("Couldn't retrieve media for that TikTok, sorry!").queue();
+//                }
+//            });
+//        }
+        else if (content.startsWith(ozbargain)) {
             // Extract the full URL and then the id from the ozBargain URL using a regex.
             Pattern fullUrlPattern = Pattern.compile("https?://www\\.ozbargain\\.com\\.au/node/\\d+");
             Matcher fullUrlMatcher = fullUrlPattern.matcher(content);
