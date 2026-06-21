@@ -35,7 +35,7 @@ public class InstagramService {
                 return null;
             }
 
-            return String.format("[Here's your reel!](%s)", output);
+            return String.format("[Here's your video!](%s)", output);
 
         } catch (Exception e) {
             System.err.println("Failed to run yt-dlp: " + e.getMessage());
