@@ -29,8 +29,8 @@ public class MessageListener extends ListenerAdapter {
 //            Pattern.CASE_INSENSITIVE
 //    );
 
-    private static final Pattern sixSevenPattern = Pattern.compile("(?:67)|(?:\\b(?:6|six)\\b.*\\b(?:7|seven)\\b)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern sevenSixPattern = Pattern.compile("(?:76)|(?:\\b(?:7|seven)\\b.*\\b(?:6|six)\\b)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern sixSevenPattern = Pattern.compile("(?:67)|(?:\\b(?:6|six)\\b.*\\b(?:7|seven)\\b)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    private static final Pattern sevenSixPattern = Pattern.compile("(?:76)|(?:\\b(?:7|seven)\\b.*\\b(?:6|six)\\b)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
     public final DealHistoryRepository dealHistoryRepository;
     private final OzbargainService ozbargainService;
