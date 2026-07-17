@@ -67,10 +67,12 @@ public class BotConfig {
                 new EmoteCommand(emoteRepo),
                 new MinecraftCommand(),
                 new YenCommand(yenService),
-                new RemindMeCommand(reminderRepo));
+                new RemindMeCommand(reminderRepo),
+                new PrettySureCommand());
 
         // The text-content of each slash command, which shows to the user upon typing.
         api.updateCommands().addCommands(
+                Commands.slash("prettysure", "Are you sure?"),
                 Commands.slash("coinflip", "Flip a coin!"),
                 Commands.slash("daylist", "Add your current daylist and track your moods.")
                         .addOption(OptionType.STRING, "daylist", "The daylist", true),
