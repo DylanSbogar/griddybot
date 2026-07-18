@@ -41,7 +41,7 @@ public class BotConfig {
     private final LastServerRepository lastServerRepo;
     private final OpenRouterService openRouterService;
     private final ConversationService conversationService;
-    private final InstagramService instagramService;
+    private final MediaService mediaService;
 
     private JDA api;
 
@@ -57,8 +57,7 @@ public class BotConfig {
 
         // Each command class is defined here.
         api.addEventListener(
-                new MessageListener(dealHistoryRepo, ozbargainService, openRouterService, conversationService,
-                        instagramService),
+                new MessageListener(dealHistoryRepo, openRouterService, conversationService, mediaService),
                 new ModelCommand(openRouterService),
                 new LastServerCommand(lastServerRepo),
                 new HistoryCommand(conversationService),
@@ -67,10 +66,12 @@ public class BotConfig {
                 new EmoteCommand(emoteRepo),
                 new MinecraftCommand(),
                 new YenCommand(yenService),
-                new RemindMeCommand(reminderRepo));
+                new RemindMeCommand(reminderRepo),
+                new PrettySureCommand());
 
         // The text-content of each slash command, which shows to the user upon typing.
         api.updateCommands().addCommands(
+                Commands.slash("prettysure", "Are you sure?"),
                 Commands.slash("coinflip", "Flip a coin!"),
                 Commands.slash("daylist", "Add your current daylist and track your moods.")
                         .addOption(OptionType.STRING, "daylist", "The daylist", true),
