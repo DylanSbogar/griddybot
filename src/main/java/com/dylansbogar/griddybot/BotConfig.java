@@ -41,7 +41,7 @@ public class BotConfig {
     private final LastServerRepository lastServerRepo;
     private final OpenRouterService openRouterService;
     private final ConversationService conversationService;
-    private final InstagramService instagramService;
+    private final MediaService mediaService;
 
     private JDA api;
 
@@ -57,8 +57,7 @@ public class BotConfig {
 
         // Each command class is defined here.
         api.addEventListener(
-                new MessageListener(dealHistoryRepo, ozbargainService, openRouterService, conversationService,
-                        instagramService),
+                new MessageListener(dealHistoryRepo, openRouterService, conversationService, mediaService),
                 new ModelCommand(openRouterService),
                 new LastServerCommand(lastServerRepo),
                 new HistoryCommand(conversationService),
