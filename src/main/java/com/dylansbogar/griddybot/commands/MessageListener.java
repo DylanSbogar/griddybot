@@ -9,6 +9,8 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,36 +18,25 @@ public class MessageListener extends ListenerAdapter {
     private static final String ozbargain = "https://www.ozbargain.com.au/node/";
     private static final Pattern thanksPattern = Pattern.compile("thanks griddy", Pattern.CASE_INSENSITIVE);
     private static final Pattern lovePattern = Pattern.compile("^i love (.*)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern instagramReelPattern = Pattern.compile(
-            "https?://(?:www\\.)?instagram\\.com/reel/[A-Za-z0-9_-]+/?(?:\\?[^\\s]*)?",
+    private static final Pattern mediaPattern = Pattern.compile(
+            "https?://(?:www\\.)?(?:instagram\\.com/reels?/[A-Za-z0-9_-]+/?(?:\\?[^\\s]*)?|(?:x\\.com|fxtwitter\\.com)/[A-Za-z0-9_]{1,15}/status/\\d+/?(?:\\?[^\\s]*)?)",
             Pattern.CASE_INSENSITIVE
     );
-    private static final Pattern xPattern = Pattern.compile(
-            "https?://(?:www\\.)?(?:x\\.com|fxtwitter\\.com)/[A-Za-z0-9_]{1,15}/status/\\d+/?(?:\\?[^\\s]*)?",
-            Pattern.CASE_INSENSITIVE);
-
-//    private static final Pattern tiktokPattern = Pattern.compile(
-//            "https?://(?:www\\.)?tiktok\\.com/@[A-Za-z0-9_.]+/video/\\d+/?(?:\\?[^\\s]*)?",
-//            Pattern.CASE_INSENSITIVE
-//    );
-
     private static final Pattern sixSevenPattern = Pattern.compile("(?:67)|(?:\\b(?:6|six)\\b.*\\b(?:7|seven)\\b)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     private static final Pattern sevenSixPattern = Pattern.compile("(?:76)|(?:\\b(?:7|seven)\\b.*\\b(?:6|six)\\b)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
+
     public final DealHistoryRepository dealHistoryRepository;
-    private final OzbargainService ozbargainService;
     private final OpenRouterService openRouterService;
     private final ConversationService conversationService;
-    private final InstagramService instagramService;
+    private final MediaService mediaService;
 
-    public MessageListener(DealHistoryRepository dealHistoryRepository, OzbargainService ozbargainService,
-                           OpenRouterService openRouterService, ConversationService conversationService,
-                           InstagramService instagramService) {
+    public MessageListener(DealHistoryRepository dealHistoryRepository, OpenRouterService openRouterService,
+                           ConversationService conversationService, MediaService mediaService) {
         this.dealHistoryRepository = dealHistoryRepository;
-        this.ozbargainService = ozbargainService;
         this.openRouterService = openRouterService;
         this.conversationService = conversationService;
-        this.instagramService = instagramService;
+        this.mediaService = mediaService;
     }
 
     @Override
@@ -66,43 +57,46 @@ public class MessageListener extends ListenerAdapter {
 
         Matcher thanks = thanksPattern.matcher(content);
         Matcher love = lovePattern.matcher(content);
-        Matcher instagramMatcher = instagramReelPattern.matcher(content);
-        Matcher xMatcher = xPattern.matcher(content);
-//        Matcher tiktokMatcher = tiktokPattern.matcher(content);
+        Matcher mediaMatcher = mediaPattern.matcher(content);
 
         Pattern promptPattern = Pattern.compile("<@!?" + griddyBot.getId() + ">\\s*(.*)");
         Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
 
-        if (instagramMatcher.find()) {
-            String instagramUrl = instagramMatcher.group();
+        if (mediaMatcher.find()) {
+            String url = mediaMatcher.group();
             channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
-                String mediaUrl = instagramService.getMediaUrl(instagramUrl);
+                String mediaUrl = mediaService.getMediaUrl(url);
                 if (mediaUrl != null) {
-                    msg.reply(mediaUrl).queue();
+                    String formattedMessage = "";
+                    msg.delete().queue();
+                    if (url.contains("x.com") || url.contains("fxtwitter.com")) {
+                        formattedMessage = String.format("> %s\n %s posted by <@!%s> at %s",
+                                msg,
+                                mediaUrl,
+                                event.getAuthor().getId(),
+                                event.getMessage().getTimeCreated().atZoneSameInstant(ZoneId.systemDefault())
+                                    .format(DateTimeFormatter.ofPattern("hh:mm a"))
+                                );
+                    } else {
+                        formattedMessage = String.format("> %s\n posted by <@!%s> at %s",
+                                mediaMatcher.replaceAll(mediaUrl),
+                                event.getAuthor().getId(),
+                                event.getMessage().getTimeCreated().atZoneSameInstant(ZoneId.systemDefault())
+                                        .format(DateTimeFormatter.ofPattern("hh:mm a")));
+                    }
+
+                    // Determine whether to reply if applicable, or just send a raw message.
+                    Message referencedMsg = msg.getReferencedMessage();
+                    if (referencedMsg != null) {
+                        referencedMsg.reply(formattedMessage).queue();
+                    } else {
+                        msg.getChannel().sendMessage(formattedMessage).queue();
+                    }
                 } else {
-                    msg.reply("Couldn't retrieve media for that reel, sorry!").queue();
-                }
-            });
-        } else if (xMatcher.find()) {
-            String xUrl = xMatcher.group();
-            channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
-                String mediaUrl = instagramService.getMediaUrl(xUrl);
-                if (mediaUrl != null) {
-                    msg.reply(mediaUrl).queue();
+                    msg.reply("Unable to retrieve media :/").queue();
                 }
             });
         }
-//        else if (tiktokMatcher.find()) {
-//            String tiktokUrl = tiktokMatcher.group();
-//            channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
-//                String mediaUrl = instagramService.getMediaUrl(tiktokUrl);
-//                if (mediaUrl != null) {
-//                    msg.reply(mediaUrl).queue();
-//                } else {
-//                    msg.reply("Couldn't retrieve media for that TikTok, sorry!").queue();
-//                }
-//            });
-//        }
         else if (content.startsWith(ozbargain)) {
             // Extract the full URL and then the id from the ozBargain URL using a regex.
             Pattern fullUrlPattern = Pattern.compile("https?://www\\.ozbargain\\.com\\.au/node/\\d+");

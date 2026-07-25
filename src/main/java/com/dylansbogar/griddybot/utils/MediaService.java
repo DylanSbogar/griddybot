@@ -6,7 +6,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 @Service
-public class InstagramService {
+public class MediaService {
 
     /**
      * Resolves an Instagram reel URL to a direct media URL using yt-dlp --get-url.
@@ -35,7 +35,7 @@ public class InstagramService {
                 return null;
             }
 
-            return String.format("[Here's your video!](%s)", output);
+            return String.format("[video](%s)", output);
 
         } catch (Exception e) {
             System.err.println("Failed to run yt-dlp: " + e.getMessage());
