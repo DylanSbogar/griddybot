@@ -93,7 +93,9 @@ public class MessageListener extends ListenerAdapter {
                         msg.getChannel().sendMessage(formattedMessage).queue();
                     }
                 } else {
-                    msg.reply("Unable to retrieve media :/").queue();
+		    if (!url.contains("x.com") && !url.contains("fxtwitter.com")) {
+                        msg.reply("Unable to retrieve media :/").queue();
+		    }
                 }
             });
         }
