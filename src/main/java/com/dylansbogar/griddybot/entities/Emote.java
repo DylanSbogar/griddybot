@@ -19,4 +19,8 @@ public class Emote {
     private String name;
 
     private String emoteId;
+
+    // Which provider this emote's id belongs to, so we build the correct CDN URL.
+    // null == legacy BetterTTV rows; "7TV" for emotes fetched via the 7TV API.
+    private String source;
 }
