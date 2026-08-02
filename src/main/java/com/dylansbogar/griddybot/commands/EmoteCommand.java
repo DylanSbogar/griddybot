@@ -38,8 +38,9 @@ public class EmoteCommand extends ListenerAdapter {
         if (event.getName().equals("emote")) {
             event.deferReply().queue(); // Defer the reply whilst we fetch the emote.
 
-            // Retrieve the input option.
+            // Retrieve the input options.
             OptionMapping emoteIn = event.getOption("emote");
+            OptionMapping refetchIn = event.getOption("refetch");
 
             if (emoteIn == null) {
                 event.getHook().sendMessage("Please enter an emote name.").queue();
@@ -47,10 +48,11 @@ public class EmoteCommand extends ListenerAdapter {
             }
 
             String emote = emoteIn.getAsString().toLowerCase();
+            boolean refetch = refetchIn != null && refetchIn.getAsBoolean();
 
             // Attempt to fetch the emote's id from the database.
             Optional<Emote> storedEmote = emoteRepo.findByName(emote);
-            if (storedEmote.isEmpty()) {
+            if (storedEmote.isEmpty() || refetch) {
                 fetchEmote(emote, event);
             } else {
                 event.getHook().sendMessage(buildUrl(storedEmote.get())).queue();
