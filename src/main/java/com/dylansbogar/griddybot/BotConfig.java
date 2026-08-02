@@ -78,7 +78,8 @@ public class BotConfig {
                 // .addOption(OptionType.ATTACHMENT, "file", "Image of the daylist."),
                 Commands.slash("emote", "Retrieve your favourite 7TV emotes.")
                         .addOption(OptionType.STRING, "emote", "The name of the emote.", true)
-                        .addOption(OptionType.BOOLEAN, "refetch", "Whether to refetch an emote with the desired name.", false),
+                        .addOption(OptionType.BOOLEAN, "refetch", "Whether to refetch an emote with the desired name.", false)
+                        .addOption(OptionType.STRING, "override", "The custom URL to override with", false),
                 Commands.slash("minecraft", "Get the status of any Minecraft server.")
                         .addOption(OptionType.STRING, "server", "The URL of the server.", true),
                 Commands.slash("undodaylist", "Undo your most recent daylist."),
