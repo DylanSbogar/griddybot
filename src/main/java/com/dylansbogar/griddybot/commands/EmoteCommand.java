@@ -25,6 +25,7 @@ public class EmoteCommand extends ListenerAdapter {
     // CDN templates. New emotes come from 7TV; legacy cached rows are BetterTTV.
     private static final String SEVENTV_CDN = "https://cdn.7tv.app/emote/%s/4x.webp";
     private static final String BTTV_CDN = "https://cdn.betterttv.net/emote/%s/3x.webp";
+    private static final String SEVENTV_EMOTE_URL_REGEX = "^https://7tv\\.app/emotes/([A-Za-z0-9]+)$";
 
     // Marker stored against emotes fetched from 7TV. Legacy rows have a null source.
     private static final String SOURCE_7TV = "7TV";
@@ -41,6 +42,7 @@ public class EmoteCommand extends ListenerAdapter {
             // Retrieve the input options.
             OptionMapping emoteIn = event.getOption("emote");
             OptionMapping refetchIn = event.getOption("refetch");
+            OptionMapping overrideIn = event.getOption("override");
 
             if (emoteIn == null) {
                 event.getHook().sendMessage("Please enter an emote name.").queue();
@@ -52,16 +54,40 @@ public class EmoteCommand extends ListenerAdapter {
 
             // Attempt to fetch the emote's id from the database.
             Optional<Emote> storedEmote = emoteRepo.findByName(emote);
-            if (storedEmote.isEmpty() || refetch) {
-                fetchEmote(emote, event);
+            String overrideUrl = overrideIn != null ? overrideIn.getAsString() : null;
+            boolean override = overrideUrl != null && !overrideUrl.isBlank();
+
+            if (storedEmote.isEmpty() || refetch || override) {
+                fetchEmote(emote, event, overrideUrl);
             } else {
                 event.getHook().sendMessage(buildUrl(storedEmote.get())).queue();
             }
         }
     }
 
-    private void fetchEmote(String emote, SlashCommandInteractionEvent event) {
+    private void fetchEmote(String emote, SlashCommandInteractionEvent event, String overrideUrl) {
         try {
+            // If the user intends to override an emote (existing or otherwise)
+            if (overrideUrl != null) {
+                if (!overrideUrl.matches(SEVENTV_EMOTE_URL_REGEX)) {
+                    event.getHook().sendMessage("Invalid 7TV emote URL.").queue();
+                    return;
+                }
+
+                // Extract emoteId from the url.
+                String emoteId = overrideUrl.replaceFirst(SEVENTV_EMOTE_URL_REGEX, "$1");
+
+                Emote newEmote = Emote.builder()
+                        .name(emote)
+                        .emoteId(emoteId)
+                        .source(SOURCE_7TV)
+                        .build();
+                emoteRepo.save(newEmote);
+
+                event.getHook().sendMessage(buildUrl(newEmote)).queue();
+                return;
+            }
+
             HttpClient client = HttpClient.newHttpClient();
 
             // A GraphQL request is a JSON body carrying the query string plus the user's
