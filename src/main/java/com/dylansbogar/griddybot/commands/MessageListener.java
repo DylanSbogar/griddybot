@@ -67,6 +67,7 @@ public class MessageListener extends ListenerAdapter {
             channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
                 String formattedMessage = "";
                 if (url.contains("x.com")) {
+                    msg.delete().queue();
                     formattedMessage = String.format("> %s\n message posted by <@!%s> as %s",
                             msg.getContentRaw().replace("x.com", "gtnhsucks.xyz"),
                             event.getAuthor().getId(),
