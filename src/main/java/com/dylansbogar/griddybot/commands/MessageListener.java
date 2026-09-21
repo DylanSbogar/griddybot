@@ -65,37 +65,35 @@ public class MessageListener extends ListenerAdapter {
         if (mediaMatcher.find()) {
             String url = mediaMatcher.group();
             channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
-                String mediaUrl = mediaService.getMediaUrl(url);
-                if (mediaUrl != null) {
-                    String formattedMessage = "";
-                    msg.delete().queue();
-                    if (url.contains("x.com") || url.contains("fxtwitter.com")) {
-                        formattedMessage = String.format("> %s\n %s posted by <@!%s> at %s",
-                                msg,
-                                mediaUrl,
-                                event.getAuthor().getId(),
-                                event.getMessage().getTimeCreated().atZoneSameInstant(ZoneId.systemDefault())
+                String formattedMessage = "";
+                if (url.contains("x.com")) {
+                    formattedMessage = String.format("> %s\n message posted by <@!%s> as %s",
+                            msg.getContentRaw().replace("x.com", "gtnhsucks.xyz"),
+                            event.getAuthor().getId(),
+                            event.getMessage().getTimeCreated().atZoneSameInstant(ZoneId.systemDefault())
                                     .format(DateTimeFormatter.ofPattern("hh:mm a"))
-                                );
-                    } else {
+                    );
+                } else {
+                    String mediaUrl = mediaService.getMediaUrl(url);
+                    if (mediaUrl != null) {
+                        msg.delete().queue();
                         formattedMessage = String.format("> %s\n posted by <@!%s> at %s",
                                 mediaMatcher.replaceAll(mediaUrl),
                                 event.getAuthor().getId(),
                                 event.getMessage().getTimeCreated().atZoneSameInstant(ZoneId.systemDefault())
                                         .format(DateTimeFormatter.ofPattern("hh:mm a")));
-                    }
-
-                    // Determine whether to reply if applicable, or just send a raw message.
-                    Message referencedMsg = msg.getReferencedMessage();
-                    if (referencedMsg != null) {
-                        referencedMsg.reply(formattedMessage).queue();
                     } else {
-                        msg.getChannel().sendMessage(formattedMessage).queue();
-                    }
-                } else {
-		    if (!url.contains("x.com") && !url.contains("fxtwitter.com")) {
                         msg.reply("Unable to retrieve media :/").queue();
-		    }
+                        return;
+                    }
+                }
+
+                // Determine whether to reply if applicable, or just send a raw message.
+                Message referencedMsg = msg.getReferencedMessage();
+                if (referencedMsg != null) {
+                    referencedMsg.reply(formattedMessage).queue();
+                } else {
+                    msg.getChannel().sendMessage(formattedMessage).queue();
                 }
             });
         }
