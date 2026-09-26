@@ -68,8 +68,10 @@ public class MessageListener extends ListenerAdapter {
                 String formattedMessage = "";
                 if (url.contains("x.com")) {
                     msg.delete().queue();
+                    String newUrl = msg.getContentRaw().replace("x.com", "gtnhsucks.xyz")
+                            .replaceAll("(https?://gtnhsucks\\.xyz/\\S+?/status/\\d+)(\\?\\S*)?", "$1/en$2");
                     formattedMessage = String.format("> %s\n message posted by <@!%s> as %s",
-                            msg.getContentRaw().replace("x.com", "gtnhsucks.xyz"),
+                            newUrl,
                             event.getAuthor().getId(),
                             event.getMessage().getTimeCreated().atZoneSameInstant(ZoneId.systemDefault())
                                     .format(DateTimeFormatter.ofPattern("hh:mm a"))
@@ -97,8 +99,7 @@ public class MessageListener extends ListenerAdapter {
                     msg.getChannel().sendMessage(formattedMessage).queue();
                 }
             });
-        }
-        else if (content.startsWith(ozbargain)) {
+        } else if (content.startsWith(ozbargain)) {
             // Extract the full URL and then the id from the ozBargain URL using a regex.
             Pattern fullUrlPattern = Pattern.compile("https?://www\\.ozbargain\\.com\\.au/node/\\d+");
             Matcher fullUrlMatcher = fullUrlPattern.matcher(content);
