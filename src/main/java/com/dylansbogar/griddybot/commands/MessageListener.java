@@ -59,10 +59,14 @@ public class MessageListener extends ListenerAdapter {
         Matcher love = lovePattern.matcher(content);
         Matcher mediaMatcher = mediaPattern.matcher(content);
 
+        Pattern mePattern = Pattern.compile("\\bme\\b", Pattern.CASE_INSENSITIVE);
+        Matcher meMatcher = mePattern.matcher(event.getMessage().getContentRaw());
+
         Pattern promptPattern = Pattern.compile("<@!?" + griddyBot.getId() + ">\\s*(.*)");
         Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
-
-        if (mediaMatcher.find()) {
+        if (meMatcher.find()) {
+            channel.sendMessage("https://klipy.com/gifs/gongaga-me").queue();
+        } else if (mediaMatcher.find()) {
             String url = mediaMatcher.group();
             channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
                 String formattedMessage = "";
