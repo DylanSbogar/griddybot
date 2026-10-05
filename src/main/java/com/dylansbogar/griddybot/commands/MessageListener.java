@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -64,7 +65,7 @@ public class MessageListener extends ListenerAdapter {
 
         Pattern promptPattern = Pattern.compile("<@!?" + griddyBot.getId() + ">\\s*(.*)");
         Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
-        if (meMatcher.find()) {
+        if (meMatcher.find() && ThreadLocalRandom.current().nextDouble() < 0.10) {
             channel.sendMessage("https://klipy.com/gifs/gongaga-me").queue();
         } else if (mediaMatcher.find()) {
             String url = mediaMatcher.group();
