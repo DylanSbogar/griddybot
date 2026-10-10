@@ -87,7 +87,7 @@ public class MessageListener extends ListenerAdapter {
 
         Pattern promptPattern = Pattern.compile("<@!?" + griddyBot.getId() + ">\\s*(.*)");
         Matcher promptMatcher = promptPattern.matcher(event.getMessage().getContentRaw());
-        if (meMatcher.find() && ThreadLocalRandom.current().nextDouble() < 0.10) {
+        if (meMatcher.find() && ThreadLocalRandom.current().nextDouble() < 0.05) {
             channel.sendMessage("https://klipy.com/gifs/gongaga-me").queue();
         } else if (mediaMatcher.find()) {
             String url = mediaMatcher.group();
