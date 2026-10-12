@@ -59,7 +59,7 @@ public class MessageListener extends ListenerAdapter {
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         MessageChannel channel = event.getChannel();
 
-        if (ThreadLocalRandom.current().nextDouble() < 0.005) {
+        if (ThreadLocalRandom.current().nextDouble() < 0.0075) {
             // Fetch a random .gif from the jumpscare list, and send it.
             String jumpscare = jumpscares.get(ThreadLocalRandom.current().nextInt(jumpscares.size()));
             channel.sendMessage(jumpscare).queue();
