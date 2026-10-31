@@ -12,8 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,18 +33,6 @@ public class MessageListener extends ListenerAdapter {
     private final ConversationService conversationService;
     private final MediaService mediaService;
 
-    public final List<String> jumpscares = List.of(
-            "https://klipy.com/gifs/deepfriedwoomy-1",
-            "https://klipy.com/gifs/bonnie-fnaf-31",
-            "https://klipy.com/gifs/oceanmam-fnaf",
-            "https://klipy.com/gifs/nightmare-foxy-fnaf",
-            "https://klipy.com/gifs/fnaf-freddy-40",
-            "https://klipy.com/gifs/fnaf-4-jumpscare",
-            "https://klipy.com/gifs/toy-bonnie-jumpscare",
-            "https://klipy.com/gifs/fnaf-2-balloon-boy",
-            "https://klipy.com/gifs/matpat-game-theory-2"
-    );
-
     public MessageListener(DealHistoryRepository dealHistoryRepository, OpenRouterService openRouterService,
                            ConversationService conversationService, MediaService mediaService) {
         this.dealHistoryRepository = dealHistoryRepository;
@@ -58,12 +44,6 @@ public class MessageListener extends ListenerAdapter {
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         MessageChannel channel = event.getChannel();
-
-        if (ThreadLocalRandom.current().nextDouble() < 0.005) {
-            // Fetch a random .gif from the jumpscare list, and send it.
-            String jumpscare = jumpscares.get(ThreadLocalRandom.current().nextInt(jumpscares.size()));
-            channel.sendMessage(jumpscare).queue();
-        }
 
         // Ensure griddybot does not respond to itself.
         if (event.getAuthor().isBot()) return;
