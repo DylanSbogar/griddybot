@@ -18,7 +18,10 @@ import java.util.regex.Pattern;
 
 public class MessageListener extends ListenerAdapter {
     private static final String ozbargain = "https://www.ozbargain.com.au/node/";
-    private static final Pattern thanksPattern = Pattern.compile("thanks griddy", Pattern.CASE_INSENSITIVE);
+    private static final Pattern thanksPattern = Pattern.compile(
+            "thanks\\s+(?:griddy|friday|grid\\s+dynamics)",
+            Pattern.CASE_INSENSITIVE
+    );
     private static final Pattern lovePattern = Pattern.compile("^i love (.*)", Pattern.CASE_INSENSITIVE);
     private static final Pattern mediaPattern = Pattern.compile(
             "https?://(?:www\\.)?(?:instagram\\.com/reels?/[A-Za-z0-9_-]+/?(?:\\?[^\\s]*)?|(?:x\\.com|fxtwitter\\.com)/[A-Za-z0-9_]{1,15}/status/\\d+/?(?:\\?[^\\s]*)?)",
