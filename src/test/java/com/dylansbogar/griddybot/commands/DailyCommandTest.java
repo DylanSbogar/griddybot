@@ -130,12 +130,14 @@ class DailyCommandTest {
         String post = "<@123> just played **Game 1**\n" + resultText;
         when(channel.sendMessage(post)).thenReturn(publicMessage);
         when(publicMessage.setAllowedMentions(anyList())).thenReturn(publicMessage);
+        when(publicMessage.setSuppressEmbeds(true)).thenReturn(publicMessage);
 
         new DailyCommand(service).onSlashCommandInteraction(event);
 
         verify(service).saveResult("user", resultText);
         verify(channel).sendMessage(post);
         verify(publicMessage).setAllowedMentions(anyList());
+        verify(publicMessage).setSuppressEmbeds(true);
     }
 
     @Test
@@ -165,12 +167,14 @@ class DailyCommandTest {
         String announcement = "Registered Game 1. Use /addmydaily name:Game 1 to put it on your list.";
         when(channel.sendMessage(announcement)).thenReturn(publicMessage);
         when(publicMessage.setAllowedMentions(anyList())).thenReturn(publicMessage);
+        when(publicMessage.setSuppressEmbeds(true)).thenReturn(publicMessage);
 
         new DailyCommand(service).onSlashCommandInteraction(event);
 
         verify(event).deferReply(true);
         verify(channel).sendMessage(announcement);
         verify(publicMessage).setAllowedMentions(anyList());
+        verify(publicMessage).setSuppressEmbeds(true);
     }
 
     @Test
@@ -192,11 +196,13 @@ class DailyCommandTest {
         String post = "**Game 1 — Player**\nGame 1 #123\n🟩🟩";
         when(channel.sendMessage(post)).thenReturn(publicMessage);
         when(publicMessage.setAllowedMentions(anyList())).thenReturn(publicMessage);
+        when(publicMessage.setSuppressEmbeds(true)).thenReturn(publicMessage);
 
         new DailyCommand(service).onSlashCommandInteraction(event);
 
         verify(service).brag("user", "");
         verify(channel).sendMessage(post);
+        verify(publicMessage).setSuppressEmbeds(true);
     }
 
     private DailyGame game(int index) {

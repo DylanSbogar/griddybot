@@ -75,7 +75,8 @@ public class DailyCommand extends ListenerAdapter {
 
     private static void postPublic(SlashCommandInteractionEvent event, List<String> messages, int index,
                                    String confirmation) {
-        event.getChannel().sendMessage(messages.get(index)).setAllowedMentions(List.of()).queue(sent -> {
+        event.getChannel().sendMessage(messages.get(index)).setAllowedMentions(List.of())
+                .setSuppressEmbeds(true).queue(sent -> {
             if (index + 1 < messages.size()) postPublic(event, messages, index + 1, confirmation);
             else sendReplies(event, List.of(confirmation), 0);
         }, error -> sendReplies(event,
