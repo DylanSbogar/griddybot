@@ -42,6 +42,7 @@ public class BotConfig {
     private final OpenRouterService openRouterService;
     private final ConversationService conversationService;
     private final MediaService mediaService;
+    private final DailyService dailyService;
 
     private JDA api;
 
@@ -67,6 +68,7 @@ public class BotConfig {
                 new MinecraftCommand(),
                 new YenCommand(yenService),
                 new RemindMeCommand(reminderRepo),
+                new DailyCommand(dailyService),
                 new PrettySureCommand());
 
         // The text-content of each slash command, which shows to the user upon typing.
@@ -94,7 +96,20 @@ public class BotConfig {
                         .addOption(OptionType.STRING, "description", "Description of the server.", true),
                 Commands.slash("lastserver", "See how many days it's been since the last server."),
                 Commands.slash("history", "Show the AI conversation summary for this channel."),
-                Commands.slash("leaderboard", "Show the social credit leaderboard.")
+                Commands.slash("leaderboard", "Show the social credit leaderboard."),
+                Commands.slash("daily", "Save a copied daily game result.")
+                        .addOption(OptionType.STRING, "result", "Paste the complete copied result.", true),
+                Commands.slash("registerdaily", "Register a daily game from an example result.")
+                        .addOption(OptionType.STRING, "name", "Game name appearing in the result or link.", true)
+                        .addOption(OptionType.STRING, "url", "HTTPS link to play the game.", true)
+                        .addOption(OptionType.STRING, "resultexample", "Paste an example copied result.", true),
+                Commands.slash("adddaily", "Add a game to your daily list.")
+                        .addOption(OptionType.STRING, "name", "Registered game name.", true),
+                Commands.slash("removedaily", "Remove a game from your daily list.")
+                        .addOption(OptionType.STRING, "name", "Registered game name.", true),
+                Commands.slash("dailies", "Show the games you have left to do today."),
+                Commands.slash("randomdaily", "Pick a random unfinished game from your list."),
+                Commands.slash("listdailies", "Show all registered daily games.")
         ).queue();
 
         return api;
