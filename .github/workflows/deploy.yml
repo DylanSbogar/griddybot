@@ -30,3 +30,18 @@ jobs:
 
       - name: Start app
         run: sudo systemctl start griddybot
+
+      - name: Notify Discord on failure
+        if: failure()
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          jq -n \
+            --arg content "**Deployment failed** and it's $ACTOR's fault
+          Commit: $COMMIT_MSG
+          $RUN_URL" \
+            '{content: $content}' \
+          | curl -sS -H "Content-Type: application/json" -d @- "$WEBHOOK"
