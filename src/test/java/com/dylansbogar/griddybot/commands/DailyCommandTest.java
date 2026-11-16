@@ -96,6 +96,49 @@ class DailyCommandTest {
     }
 
     @Test
+    void dailyMessagesIncludeThePlayerAndPreserveLongResults() {
+        String resultText = "Game 1 #123\n" + "🟩".repeat(1100) + "\nFinished";
+
+        List<String> messages = DailyCommand.formatDaily(game(1), "<@123>", resultText);
+
+        assertTrue(messages.size() > 1);
+        assertTrue(messages.stream().allMatch(message -> message.length() <= 1900));
+        assertEquals("<@123> just played **Game 1**\n" + resultText, String.join("", messages));
+    }
+
+    @Test
+    void savingADailyPostsTheResultToTheChannel() {
+        DailyService service = mock(DailyService.class);
+        SlashCommandInteractionEvent event = mock(SlashCommandInteractionEvent.class);
+        User user = mock(User.class);
+        MessageChannelUnion channel = mock(MessageChannelUnion.class);
+        MessageCreateAction publicMessage = mock(MessageCreateAction.class);
+        ReplyCallbackAction deferral = mock(ReplyCallbackAction.class);
+        OptionMapping result = mock(OptionMapping.class);
+        DailyGame game = game(1);
+        String resultText = "Game 1 #123\n🟩🟩";
+        when(event.getName()).thenReturn("daily");
+        when(event.getUser()).thenReturn(user);
+        when(user.getId()).thenReturn("user");
+        when(user.getAsMention()).thenReturn("<@123>");
+        when(event.deferReply(true)).thenReturn(deferral);
+        when(event.getChannel()).thenReturn(channel);
+        when(event.getOption("result")).thenReturn(result);
+        when(result.getAsString()).thenReturn(resultText);
+        when(service.saveResult("user", resultText)).thenReturn(
+                new DailyService.SaveOutcome(game, LocalDate.of(2026, 11, 16), false, true));
+        String post = "<@123> just played **Game 1**\n" + resultText;
+        when(channel.sendMessage(post)).thenReturn(publicMessage);
+        when(publicMessage.setAllowedMentions(anyList())).thenReturn(publicMessage);
+
+        new DailyCommand(service).onSlashCommandInteraction(event);
+
+        verify(service).saveResult("user", resultText);
+        verify(channel).sendMessage(post);
+        verify(publicMessage).setAllowedMentions(anyList());
+    }
+
+    @Test
     void registrationAnnouncesToTheChannel() {
         DailyService service = mock(DailyService.class);
         SlashCommandInteractionEvent event = mock(SlashCommandInteractionEvent.class);

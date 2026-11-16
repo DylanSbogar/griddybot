@@ -26,10 +26,14 @@ public class DailyCommand extends ListenerAdapter {
             String userId = event.getUser().getId();
             List<String> replies = switch (event.getName()) {
                 case "daily" -> {
-                    DailyService.SaveOutcome outcome = dailyService.saveResult(userId, option(event, "result"));
-                    yield List.of((outcome.replaced() ? "Updated" : "Saved") + " your " + outcome.game().getName()
+                    String result = option(event, "result");
+                    DailyService.SaveOutcome outcome = dailyService.saveResult(userId, result);
+                    String confirmation = (outcome.replaced() ? "Updated" : "Saved") + " your " + outcome.game().getName()
                             + " result for " + outcome.date() + "."
-                            + (outcome.addedToList() ? " Added it to your daily list." : ""));
+                            + (outcome.addedToList() ? " Added it to your daily list." : "");
+                    postPublic(event, formatDaily(outcome.game(), event.getUser().getAsMention(), result), 0,
+                            confirmation);
+                    yield List.of();
                 }
                 case "brag" -> {
                     List<DailyResult> results = dailyService.brag(userId, option(event, "name"));
@@ -116,13 +120,23 @@ public class DailyCommand extends ListenerAdapter {
         String cleanUserName = userName.replaceAll("[\\r\\n]", " ");
         for (DailyResult result : results) {
             String post = "**" + result.getGame().getName() + " — " + cleanUserName + "**\n" + result.getResultText();
-            int start = 0;
-            while (start < post.length()) {
-                int end = Math.min(start + MESSAGE_LIMIT, post.length());
-                if (end < post.length() && Character.isHighSurrogate(post.charAt(end - 1))) end--;
-                messages.add(post.substring(start, end));
-                start = end;
-            }
+            messages.addAll(chunkPost(post));
+        }
+        return messages;
+    }
+
+    static List<String> formatDaily(DailyGame game, String userMention, String result) {
+        return chunkPost(userMention + " just played **" + game.getName() + "**\n" + result.trim());
+    }
+
+    private static List<String> chunkPost(String post) {
+        List<String> messages = new ArrayList<>();
+        int start = 0;
+        while (start < post.length()) {
+            int end = Math.min(start + MESSAGE_LIMIT, post.length());
+            if (end < post.length() && Character.isHighSurrogate(post.charAt(end - 1))) end--;
+            messages.add(post.substring(start, end));
+            start = end;
         }
         return messages;
     }
