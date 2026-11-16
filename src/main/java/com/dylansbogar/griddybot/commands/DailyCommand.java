@@ -1,6 +1,7 @@
 package com.dylansbogar.griddybot.commands;
 
 import com.dylansbogar.griddybot.entities.DailyGame;
+import com.dylansbogar.griddybot.entities.DailyResult;
 import com.dylansbogar.griddybot.utils.DailyService;
 import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -16,7 +17,8 @@ public class DailyCommand extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        if (!List.of("daily", "registerdaily", "adddaily", "removedaily", "dailies", "randomdaily", "listdailies")
+        if (!List.of("daily", "brag", "registerdaily", "unregisterdaily", "addmydaily", "removemydaily",
+                        "dailies", "d", "randomdaily", "listalldailies")
                 .contains(event.getName())) return;
 
         event.deferReply(true).queue();
@@ -24,32 +26,60 @@ public class DailyCommand extends ListenerAdapter {
             String userId = event.getUser().getId();
             List<String> replies = switch (event.getName()) {
                 case "daily" -> {
-                    DailyService.SaveOutcome outcome = dailyService.saveResult(userId, option(event, "result"));
-                    yield List.of((outcome.replaced() ? "Updated" : "Saved") + " your " + outcome.game().getName()
-                            + " result for " + outcome.date() + ".");
+                    String result = option(event, "result");
+                    DailyService.SaveOutcome outcome = dailyService.saveResult(userId, result);
+                    String confirmation = (outcome.replaced() ? "Updated" : "Saved") + " your " + outcome.game().getName()
+                            + " result for " + outcome.date() + "."
+                            + (outcome.addedToList() ? " Added it to your daily list." : "");
+                    postPublic(event, formatDaily(outcome.game(), event.getUser().getAsMention(), result), 0,
+                            confirmation);
+                    yield List.of();
+                }
+                case "brag" -> {
+                    List<DailyResult> results = dailyService.brag(userId, option(event, "name"));
+                    postPublic(event, formatBrag(results, event.getUser().getName()), 0,
+                            "Posted " + results.size() + " daily result" + (results.size() == 1 ? "" : "s") + ".");
+                    yield List.of();
                 }
                 case "registerdaily" -> {
                     DailyGame game = dailyService.register(option(event, "name"), option(event, "url"),
                             option(event, "resultexample"));
-                    yield List.of("Registered " + game.getName() + ". Use /adddaily name:" + game.getName()
-                            + " to put it on your list.");
+                    String announcement = "Registered " + game.getName() + ". Use /addmydaily name:" + game.getName()
+                            + " to put it on your list.";
+                    postPublic(event, List.of(announcement), 0, "Registered " + game.getName() + ".");
+                    yield List.of();
                 }
-                case "adddaily" -> List.of("Added " + dailyService.add(userId, option(event, "name")).getName()
+                case "unregisterdaily" -> {
+                    DailyGame game = dailyService.unregister(option(event, "name"));
+                    postPublic(event, List.of("Unregistered " + game.getName() + ". Saved results were kept."), 0,
+                            "Unregistered " + game.getName() + ".");
+                    yield List.of();
+                }
+                case "addmydaily" -> List.of("Added " + dailyService.add(userId, option(event, "name")).getName()
                         + " to your daily list.");
-                case "removedaily" -> List.of("Removed " + dailyService.remove(userId, option(event, "name")).getName()
+                case "removemydaily" -> List.of("Removed " + dailyService.remove(userId, option(event, "name")).getName()
                         + " from your daily list.");
-                case "dailies" -> formatList(dailyService.list(userId));
+                case "dailies", "d" -> formatList(dailyService.list(userId));
                 case "randomdaily" -> {
                     DailyGame game = dailyService.randomPending(userId);
                     yield List.of("Try " + game.getName() + ": <" + game.getUrl() + ">");
                 }
-                case "listdailies" -> formatAvailable(dailyService.availableGames());
+                case "listalldailies" -> formatAvailable(dailyService.availableGames());
                 default -> throw new IllegalStateException("Unexpected daily command");
             };
-            sendReplies(event, replies, 0);
+            if (!replies.isEmpty()) sendReplies(event, replies, 0);
         } catch (IllegalArgumentException e) {
             sendReplies(event, List.of(e.getMessage()), 0);
         }
+    }
+
+    private static void postPublic(SlashCommandInteractionEvent event, List<String> messages, int index,
+                                   String confirmation) {
+        event.getChannel().sendMessage(messages.get(index)).setAllowedMentions(List.of()).queue(sent -> {
+            if (index + 1 < messages.size()) postPublic(event, messages, index + 1, confirmation);
+            else sendReplies(event, List.of(confirmation), 0);
+        }, error -> sendReplies(event,
+                List.of("Could not finish posting here. Check the channel before retrying."), 0));
     }
 
     private static void sendReplies(SlashCommandInteractionEvent event, List<String> replies, int index) {
@@ -66,7 +96,7 @@ public class DailyCommand extends ListenerAdapter {
 
     static List<String> formatList(DailyService.DailyList list) {
         if (list.pending().isEmpty() && list.completed().isEmpty()) {
-            return List.of("Your daily list is empty. Use /listdailies and /adddaily to choose games.");
+            return List.of("Your daily list is empty. Use /listalldailies and /addmydaily to choose games.");
         }
         List<String> lines = new ArrayList<>();
         lines.add("Your dailies for " + list.date() + ":");
@@ -83,6 +113,32 @@ public class DailyCommand extends ListenerAdapter {
             for (DailyGame game : list.completed()) lines.add("• " + game.getName());
         }
         return chunkLines(lines);
+    }
+
+    static List<String> formatBrag(List<DailyResult> results, String userName) {
+        List<String> messages = new ArrayList<>();
+        String cleanUserName = userName.replaceAll("[\\r\\n]", " ");
+        for (DailyResult result : results) {
+            String post = "**" + result.getGame().getName() + " — " + cleanUserName + "**\n" + result.getResultText();
+            messages.addAll(chunkPost(post));
+        }
+        return messages;
+    }
+
+    static List<String> formatDaily(DailyGame game, String userMention, String result) {
+        return chunkPost(userMention + " just played **" + game.getName() + "**\n" + result.trim());
+    }
+
+    private static List<String> chunkPost(String post) {
+        List<String> messages = new ArrayList<>();
+        int start = 0;
+        while (start < post.length()) {
+            int end = Math.min(start + MESSAGE_LIMIT, post.length());
+            if (end < post.length() && Character.isHighSurrogate(post.charAt(end - 1))) end--;
+            messages.add(post.substring(start, end));
+            start = end;
+        }
+        return messages;
     }
 
     static List<String> formatAvailable(List<DailyGame> games) {

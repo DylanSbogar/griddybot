@@ -99,17 +99,22 @@ public class BotConfig {
                 Commands.slash("leaderboard", "Show the social credit leaderboard."),
                 Commands.slash("daily", "Save a copied daily game result.")
                         .addOption(OptionType.STRING, "result", "Paste the complete copied result.", true),
+                Commands.slash("brag", "Post your saved daily results from today.")
+                        .addOption(OptionType.STRING, "name", "Only post today's result for this game.", false),
                 Commands.slash("registerdaily", "Register a daily game from an example result.")
                         .addOption(OptionType.STRING, "name", "Game name appearing in the result or link.", true)
                         .addOption(OptionType.STRING, "url", "HTTPS link to play the game.", true)
                         .addOption(OptionType.STRING, "resultexample", "Paste an example copied result.", true),
-                Commands.slash("adddaily", "Add a game to your daily list.")
+                Commands.slash("unregisterdaily", "Unregister a game while keeping its saved results.")
                         .addOption(OptionType.STRING, "name", "Registered game name.", true),
-                Commands.slash("removedaily", "Remove a game from your daily list.")
+                Commands.slash("addmydaily", "Add a game to your daily list.")
+                        .addOption(OptionType.STRING, "name", "Registered game name.", true),
+                Commands.slash("removemydaily", "Remove a game from your daily list.")
                         .addOption(OptionType.STRING, "name", "Registered game name.", true),
                 Commands.slash("dailies", "Show the games you have left to do today."),
+                Commands.slash("d", "Shortcut for /dailies."),
                 Commands.slash("randomdaily", "Pick a random unfinished game from your list."),
-                Commands.slash("listdailies", "Show all registered daily games.")
+                Commands.slash("listalldailies", "Show all registered daily games.")
         ).queue();
 
         return api;

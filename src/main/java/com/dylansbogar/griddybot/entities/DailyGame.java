@@ -24,4 +24,8 @@ public class DailyGame {
 
     @Column(nullable = false, length = 500)
     private String url;
+
+    // Null means active for rows created before this column was added.
+    @Builder.Default
+    private Boolean registered = true;
 }

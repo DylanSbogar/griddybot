@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
@@ -60,9 +61,6 @@ public class DailyService {
         if (!NAME.matcher(cleanName).matches()) {
             throw new IllegalArgumentException("Use a game name of 1–50 letters, numbers, spaces, periods, underscores or hyphens.");
         }
-        if (games.findByNameKey(key(cleanName)).isPresent()) {
-            throw new IllegalArgumentException("That daily is already registered.");
-        }
         if (!validUrl(url)) {
             throw new IllegalArgumentException("Use a valid HTTPS game link.");
         }
@@ -70,7 +68,24 @@ public class DailyService {
                 (!mentionsGame(example, cleanName) && !containsGameUrl(example, url))) {
             throw new IllegalArgumentException("The example must mention the game in its opening lines or include its game link.");
         }
-        return games.save(DailyGame.builder().name(cleanName).nameKey(key(cleanName)).url(url.trim()).build());
+        DailyGame game = games.findByNameKey(key(cleanName)).orElse(null);
+        if (game != null && isRegistered(game)) {
+            throw new IllegalArgumentException("That daily is already registered.");
+        }
+        if (game == null) {
+            game = DailyGame.builder().name(cleanName).nameKey(key(cleanName)).build();
+        }
+        game.setName(cleanName);
+        game.setUrl(url.trim());
+        game.setRegistered(true);
+        return games.save(game);
+    }
+
+    @Transactional
+    public DailyGame unregister(String name) {
+        DailyGame game = findRegisteredGame(name);
+        game.setRegistered(false);
+        return games.save(game);
     }
 
     @Transactional
@@ -78,7 +93,7 @@ public class DailyService {
         if (text == null || text.isBlank() || text.length() > 6000) {
             throw new IllegalArgumentException("Paste a result of up to 6000 characters.");
         }
-        DailyGame game = detectGame(text, games.findAll());
+        DailyGame game = detectGame(text, availableGames());
 
         LocalDate today = LocalDate.now(DAILY_ZONE);
         DailyResult result = results.findByUserIdAndGameAndPlayedOn(userId, game, today).orElse(null);
@@ -91,12 +106,16 @@ public class DailyService {
         result.setPuzzleNumber(number != null && number.length() <= 50 ? number : null);
         result.setPostedAt(OffsetDateTime.now(DAILY_ZONE));
         results.save(result);
-        return new SaveOutcome(game, today, replaced);
+        boolean addedToList = preferences.findByUserIdAndGame(userId, game).isEmpty();
+        if (addedToList) {
+            preferences.save(DailyPreference.builder().userId(userId).game(game).build());
+        }
+        return new SaveOutcome(game, today, replaced, addedToList);
     }
 
     @Transactional
     public DailyGame add(String userId, String name) {
-        DailyGame game = findGame(name);
+        DailyGame game = findRegisteredGame(name);
         if (preferences.findByUserIdAndGame(userId, game).isPresent()) {
             throw new IllegalArgumentException(game.getName() + " is already on your daily list.");
         }
@@ -121,6 +140,7 @@ public class DailyService {
                 .forEach(result -> completed.add(result.getGame().getId()));
         List<DailyGame> selected = preferences.findByUserId(userId).stream()
                 .map(DailyPreference::getGame)
+                .filter(DailyService::isRegistered)
                 .sorted(Comparator.comparing(DailyGame::getName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
         return new DailyList(today,
@@ -132,7 +152,7 @@ public class DailyService {
     public DailyGame randomPending(String userId) {
         List<DailyGame> pending = list(userId).pending();
         if (pending.isEmpty()) {
-            throw new IllegalArgumentException("No unfinished dailies on your list. Use /adddaily to add one.");
+            throw new IllegalArgumentException("No unfinished dailies on your list. Use /addmydaily to add one.");
         }
         return pending.get(ThreadLocalRandom.current().nextInt(pending.size()));
     }
@@ -140,13 +160,38 @@ public class DailyService {
     @Transactional(readOnly = true)
     public List<DailyGame> availableGames() {
         return games.findAll().stream()
+                .filter(DailyService::isRegistered)
                 .sorted(Comparator.comparing(DailyGame::getName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<DailyResult> brag(String userId, String name) {
+        List<DailyResult> today = results.findByUserIdAndPlayedOn(userId, LocalDate.now(DAILY_ZONE));
+        if (name != null && !name.isBlank()) {
+            String nameKey = key(name);
+            today = today.stream().filter(result -> Objects.equals(result.getGame().getNameKey(), nameKey)).toList();
+            if (today.isEmpty()) throw new IllegalArgumentException("You have no result for that daily today.");
+        } else if (today.isEmpty()) {
+            throw new IllegalArgumentException("You have no saved daily results today. Use /daily first.");
+        }
+        return today.stream().sorted(Comparator.comparing(result -> result.getGame().getName(), String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    private static boolean isRegistered(DailyGame game) {
+        return !Boolean.FALSE.equals(game.getRegistered());
+    }
+
+    private DailyGame findRegisteredGame(String name) {
+        DailyGame game = findGame(name);
+        if (!isRegistered(game)) throw new IllegalArgumentException("Unknown daily. Use /listalldailies to see registered games.");
+        return game;
+    }
+
     private DailyGame findGame(String name) {
         return games.findByNameKey(key(name)).orElseThrow(() ->
-                new IllegalArgumentException("Unknown daily. Use /listdailies to see registered games."));
+                new IllegalArgumentException("Unknown daily. Use /listalldailies to see registered games."));
     }
 
     private static String key(String name) {
@@ -243,6 +288,6 @@ public class DailyService {
         }
     }
 
-    public record SaveOutcome(DailyGame game, LocalDate date, boolean replaced) {}
+    public record SaveOutcome(DailyGame game, LocalDate date, boolean replaced, boolean addedToList) {}
     public record DailyList(LocalDate date, List<DailyGame> pending, List<DailyGame> completed) {}
 }
