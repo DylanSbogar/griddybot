@@ -130,7 +130,7 @@ public class MessageListener extends ListenerAdapter {
         } else if (content.equalsIgnoreCase("gm") || content.equalsIgnoreCase("gn")) {
             channel.sendMessage(content).queue();
         } else if (thanks.find()) {
-            channel.sendMessage("No worries <3").queue()
+            channel.sendMessage("No worries <3").queue();
         } else if (love.find()) {
             String lovedThing = love.group(1);
             if (lovedThing.length() > 1950) { // To ensure we don't surpass Discords maximum message length.
