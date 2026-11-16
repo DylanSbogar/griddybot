@@ -1,0 +1,32 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ release/slop ]
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '17'
+
+      - name: Build
+        run: mvn -B clean package -DskipTests
+
+      - name: Stop app
+        run: sudo systemctl stop griddybot || true
+
+      - name: Deploy jar
+        run: cp target/*.jar /opt/griddybot/griddybot.jar
+
+      - name: Start app
+        run: sudo systemctl start griddybot
