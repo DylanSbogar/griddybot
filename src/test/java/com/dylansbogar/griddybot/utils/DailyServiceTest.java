@@ -120,6 +120,34 @@ class DailyServiceTest {
     }
 
     @Test
+    void savingAResultAddsAnUnselectedGameToTheUsersList() {
+        DailyGame wordle = game("Wordle");
+        when(games.findAll()).thenReturn(List.of(wordle));
+        when(preferences.findByUserIdAndGame("user", wordle)).thenReturn(Optional.empty());
+
+        DailyService.SaveOutcome outcome = service.saveResult("user", "Wordle 1 3/6\n🟩🟩🟩🟩🟩");
+
+        ArgumentCaptor<DailyPreference> saved = ArgumentCaptor.forClass(DailyPreference.class);
+        verify(preferences).save(saved.capture());
+        assertEquals("user", saved.getValue().getUserId());
+        assertEquals(wordle, saved.getValue().getGame());
+        assertTrue(outcome.addedToList());
+    }
+
+    @Test
+    void savingAResultDoesNotDuplicateAnExistingPersonalSelection() {
+        DailyGame wordle = game("Wordle");
+        DailyPreference existing = DailyPreference.builder().userId("user").game(wordle).build();
+        when(games.findAll()).thenReturn(List.of(wordle));
+        when(preferences.findByUserIdAndGame("user", wordle)).thenReturn(Optional.of(existing));
+
+        DailyService.SaveOutcome outcome = service.saveResult("user", "Wordle 1 3/6\n🟩🟩🟩🟩🟩");
+
+        verify(preferences, never()).save(any(DailyPreference.class));
+        assertFalse(outcome.addedToList());
+    }
+
+    @Test
     void registrationRequiresMatchingExampleAndHttpsLink() {
         assertThrows(IllegalArgumentException.class,
                 () -> service.register("Minecraftdle", "https://minecraftdle.net", "Wordle 123 3/6"));

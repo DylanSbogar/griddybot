@@ -106,7 +106,11 @@ public class DailyService {
         result.setPuzzleNumber(number != null && number.length() <= 50 ? number : null);
         result.setPostedAt(OffsetDateTime.now(DAILY_ZONE));
         results.save(result);
-        return new SaveOutcome(game, today, replaced);
+        boolean addedToList = preferences.findByUserIdAndGame(userId, game).isEmpty();
+        if (addedToList) {
+            preferences.save(DailyPreference.builder().userId(userId).game(game).build());
+        }
+        return new SaveOutcome(game, today, replaced, addedToList);
     }
 
     @Transactional
@@ -284,6 +288,6 @@ public class DailyService {
         }
     }
 
-    public record SaveOutcome(DailyGame game, LocalDate date, boolean replaced) {}
+    public record SaveOutcome(DailyGame game, LocalDate date, boolean replaced, boolean addedToList) {}
     public record DailyList(LocalDate date, List<DailyGame> pending, List<DailyGame> completed) {}
 }

@@ -28,7 +28,8 @@ public class DailyCommand extends ListenerAdapter {
                 case "daily" -> {
                     DailyService.SaveOutcome outcome = dailyService.saveResult(userId, option(event, "result"));
                     yield List.of((outcome.replaced() ? "Updated" : "Saved") + " your " + outcome.game().getName()
-                            + " result for " + outcome.date() + ".");
+                            + " result for " + outcome.date() + "."
+                            + (outcome.addedToList() ? " Added it to your daily list." : ""));
                 }
                 case "brag" -> {
                     List<DailyResult> results = dailyService.brag(userId, option(event, "name"));
