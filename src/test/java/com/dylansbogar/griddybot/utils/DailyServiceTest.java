@@ -157,6 +157,58 @@ class DailyServiceTest {
         assertEquals(connections, service.randomPending("user"));
     }
 
+    @Test
+    void unregisterHidesGameWithoutDeletingResultsAndReregisterReusesItsIdentity() {
+        DailyGame wordle = game("Wordle");
+        UUID originalId = wordle.getId();
+        when(games.findByNameKey("wordle")).thenReturn(Optional.of(wordle));
+        when(games.findAll()).thenReturn(List.of(wordle));
+
+        service.unregister("wOrDlE");
+
+        assertFalse(wordle.getRegistered());
+        assertTrue(service.availableGames().isEmpty());
+        assertThrows(IllegalArgumentException.class, () -> service.add("user", "WORDLE"));
+        verifyNoInteractions(results);
+
+        service.register("WORDLE", "https://example.org/wordle", "Wordle #123\n🟩🟩🟩");
+
+        assertEquals(originalId, wordle.getId());
+        assertEquals("wordle", wordle.getNameKey());
+        assertTrue(wordle.getRegistered());
+        assertEquals("https://example.org/wordle", wordle.getUrl());
+        verify(games, times(2)).save(same(wordle));
+        verifyNoInteractions(results);
+    }
+
+    @Test
+    void bragIncludesInactiveResultsAndMatchesOptionalNameIgnoringCase() {
+        DailyGame wordle = game("Wordle");
+        DailyGame oldGame = game("Old Game");
+        oldGame.setRegistered(false);
+        DailyResult first = DailyResult.builder().game(wordle).resultText("Wordle #1\n🟩🟩").build();
+        DailyResult second = DailyResult.builder().game(oldGame).resultText("Old Game #1\n🟩🟩").build();
+        when(results.findByUserIdAndPlayedOn(eq("user"), any())).thenReturn(List.of(first, second));
+
+        assertEquals(List.of(second, first), service.brag("user", ""));
+        assertEquals(List.of(second), service.brag("user", "oLd GaMe"));
+        assertThrows(IllegalArgumentException.class, () -> service.brag("user", "Connections"));
+    }
+
+    @Test
+    void inactivePreferenceIsHiddenFromTodaysListButCanBeRemoved() {
+        DailyGame oldGame = game("Old Game");
+        oldGame.setRegistered(false);
+        DailyPreference preference = DailyPreference.builder().userId("user").game(oldGame).build();
+        when(preferences.findByUserId("user")).thenReturn(List.of(preference));
+        when(preferences.findByUserIdAndGame("user", oldGame)).thenReturn(Optional.of(preference));
+        when(games.findByNameKey("old game")).thenReturn(Optional.of(oldGame));
+
+        assertTrue(service.list("user").pending().isEmpty());
+        assertEquals(oldGame, service.remove("user", "OLD GAME"));
+        verify(preferences).delete(preference);
+    }
+
     private static DailyGame game(String name) {
         return game(name, "https://example.com");
     }
