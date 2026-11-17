@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,6 +20,7 @@ jobs:
         with:
           distribution: corretto
           java-version: "17"
+          cache: maven
 
       - name: Build
-        run: mvn -B -f backend/pom.xml clean package -DskipTests
+        run: mvn -B clean package -DskipTests
