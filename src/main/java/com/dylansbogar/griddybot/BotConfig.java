@@ -41,7 +41,6 @@ public class BotConfig {
     private final LastServerRepository lastServerRepo;
     private final OpenRouterService openRouterService;
     private final ConversationService conversationService;
-    private final MediaService mediaService;
     private final DailyService dailyService;
 
     private JDA api;
@@ -58,7 +57,7 @@ public class BotConfig {
 
         // Each command class is defined here.
         api.addEventListener(
-                new MessageListener(dealHistoryRepo, openRouterService, conversationService, mediaService),
+                new MessageListener(dealHistoryRepo, openRouterService, conversationService),
                 new ModelCommand(openRouterService),
                 new LastServerCommand(lastServerRepo),
                 new HistoryCommand(conversationService),

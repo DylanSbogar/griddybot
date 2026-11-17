@@ -24,7 +24,10 @@ public class MessageListener extends ListenerAdapter {
     );
     private static final Pattern lovePattern = Pattern.compile("^i love (.*)", Pattern.CASE_INSENSITIVE);
     private static final Pattern mediaPattern = Pattern.compile(
-            "https?://(?:www\\.)?(?:instagram\\.com/reels?/[A-Za-z0-9_-]+/?(?:\\?[^\\s]*)?|(?:x\\.com|fxtwitter\\.com)/[A-Za-z0-9_]{1,15}/status/\\d+/?(?:\\?[^\\s]*)?)",
+            "https?://(?:www\\.)?(?:"
+                    + "instagram\\.com/(?:[A-Za-z0-9_.]+/)?(?:p|reels?)/[A-Za-z0-9_-]+/?(?:\\?[^\\s]*)?"
+                    + "|(?:x\\.com|fxtwitter\\.com)/[A-Za-z0-9_]{1,15}/status/\\d+/?(?:\\?[^\\s]*)?"
+                    + ")",
             Pattern.CASE_INSENSITIVE
     );
     private static final Pattern sixSevenPattern = Pattern.compile("(?:67)|(?:\\b(?:6|six)\\b.*\\b(?:7|seven)\\b)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
@@ -34,14 +37,12 @@ public class MessageListener extends ListenerAdapter {
     public final DealHistoryRepository dealHistoryRepository;
     private final OpenRouterService openRouterService;
     private final ConversationService conversationService;
-    private final MediaService mediaService;
 
     public MessageListener(DealHistoryRepository dealHistoryRepository, OpenRouterService openRouterService,
-                           ConversationService conversationService, MediaService mediaService) {
+                           ConversationService conversationService) {
         this.dealHistoryRepository = dealHistoryRepository;
         this.openRouterService = openRouterService;
         this.conversationService = conversationService;
-        this.mediaService = mediaService;
     }
 
     @Override
@@ -75,31 +76,23 @@ public class MessageListener extends ListenerAdapter {
         } else if (mediaMatcher.find()) {
             String url = mediaMatcher.group();
             channel.retrieveMessageById(event.getMessageId()).queue(msg -> {
-                String formattedMessage = "";
-                if (url.contains("x.com")) {
-                    msg.delete().queue();
-                    String newUrl = msg.getContentRaw().replace("x.com", "gtnhsucks.xyz")
-                            .replaceAll("(https?://gtnhsucks\\.xyz/\\S+?/status/\\d+)(\\?\\S*)?", "$1/en$2");
-                    formattedMessage = String.format("> %s\n message posted by <@!%s> as %s",
-                            newUrl,
-                            event.getAuthor().getId(),
-                            event.getMessage().getTimeCreated().atZoneSameInstant(ZoneId.systemDefault())
-                                    .format(DateTimeFormatter.ofPattern("hh:mm a"))
-                    );
-                } else {
-                    String mediaUrl = mediaService.getMediaUrl(url);
-                    if (mediaUrl != null) {
-                        msg.delete().queue();
-                        formattedMessage = String.format("> %s\n posted by <@!%s> at %s",
-                                mediaMatcher.replaceAll(mediaUrl),
-                                event.getAuthor().getId(),
-                                event.getMessage().getTimeCreated().atZoneSameInstant(ZoneId.systemDefault())
-                                        .format(DateTimeFormatter.ofPattern("hh:mm a")));
-                    } else {
-                        msg.reply("Unable to retrieve media :/").queue();
-                        return;
-                    }
-                }
+                msg.delete().queue();
+
+                String raw = msg.getContentRaw();
+                String newUrl = url.contains("x.com")
+                        ? raw.replaceAll("https?://(?:www\\.)?x\\.com/", "https://gtnhsucks.xyz/")
+                             .replaceAll("(https?://gtnhsucks\\.xyz/\\S+?/status/\\d+)(\\?\\S*)?", "$1/en$2")
+                        : raw.replaceAll("https?://(?:www\\.)?instagram\\.com/", "https://ig.gtnhsucks.xyz/")
+                             .replaceAll("(https://ig\\.gtnhsucks\\.xyz/\\S+?)\\?\\S*", "$1");
+
+                String formattedMessage = String.format("> %s\n message posted by <@!%s> as %s",
+                        newUrl,
+                        event.getAuthor().getId(),
+                        event.getMessage().getTimeCreated()
+                                .atZoneSameInstant(ZoneId.systemDefault())
+                                .format(DateTimeFormatter.ofPattern("hh:mm a")));
+
+
 
                 // Determine whether to reply if applicable, or just send a raw message.
                 Message referencedMsg = msg.getReferencedMessage();
