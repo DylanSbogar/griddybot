@@ -81,9 +81,10 @@ public class MessageListener extends ListenerAdapter {
                 String raw = msg.getContentRaw();
                 String newUrl = url.contains("x.com")
                         ? raw.replaceAll("https?://(?:www\\.)?x\\.com/", "https://gtnhsucks.xyz/")
-                             .replaceAll("(https?://gtnhsucks\\.xyz/\\S+?/status/\\d+)(\\?\\S*)?", "$1/en$2")
-                        : raw.replaceAll("https?://(?:www\\.)?instagram\\.com/", "https://ig.gtnhsucks.xyz/")
-                             .replaceAll("(https://ig\\.gtnhsucks\\.xyz/\\S+?)\\?\\S*", "$1");
+                        .replaceAll("(https?://gtnhsucks\\.xyz/\\S+?/status/\\d+)(\\?\\S*)?", "$1/en$2")
+                        : raw.replaceAll("(?i)https?://(?:www\\.)?instagram\\.com/(?:[A-Za-z0-9_.]+/)?reels?/", "https://ig.gtnhsucks.xyz/reel/")
+                        .replaceAll("(?i)https?://(?:www\\.)?instagram\\.com/", "https://ig.gtnhsucks.xyz/")
+                        .replaceAll("(https://ig\\.gtnhsucks\\.xyz/\\S+?)\\?\\S*", "$1");
 
                 String formattedMessage = String.format("> %s\n message posted by <@!%s> as %s",
                         newUrl,
